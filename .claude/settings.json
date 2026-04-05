@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash([ -f \".claude/CLAUDE.md\" ])",
+      "Bash([ -f \"$HOME/.claude/CLAUDE.md\" ])",
+      "Bash(bash \"/Users/mariusandrita/.claude/plugins/marketplaces/omc/scripts/setup-claude-md.sh\" global)"
+    ]
+  }
+}
