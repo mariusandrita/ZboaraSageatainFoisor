@@ -4,7 +4,9 @@
       "Bash([ -f \".claude/CLAUDE.md\" ])",
       "Bash([ -f \"$HOME/.claude/CLAUDE.md\" ])",
       "Bash(bash \"/Users/mariusandrita/.claude/plugins/marketplaces/omc/scripts/setup-claude-md.sh\" global)",
-      "Bash(wc -l /Users/mariusandrita/Dockers/DartsLeague/PLAN.md /Users/mariusandrita/Dockers/DartsLeague/docs/*.md /Users/mariusandrita/Dockers/DartsLeague/docs/agents/*.md)"
+      "Bash(wc -l /Users/mariusandrita/Dockers/DartsLeague/PLAN.md /Users/mariusandrita/Dockers/DartsLeague/docs/*.md /Users/mariusandrita/Dockers/DartsLeague/docs/agents/*.md)",
+      "Bash(find /Users/mariusandrita/Dockers/DartsLeague -name \"vite.config.js\" -exec cat {} \\\\;)",
+      "mcp__stitch__list_screens"
     ]
   }
 }

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775409528077,
+  "lastScanned": 1775552493331,
   "projectRoot": "/Users/mariusandrita/Dockers/DartsLeague",
   "techStack": {
     "languages": [],
@@ -38,13 +38,146 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 2,
-      "lastAccessed": 1775409528065,
+      "lastAccessed": 1775552493315,
       "keyFiles": [
         "ARCHITECTURE.md",
         "HARDWARE.md"
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1775558872318,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 1,
+      "lastAccessed": 1775558872544,
+      "type": "file"
+    },
+    {
+      "path": "server/package.json",
+      "accessCount": 1,
+      "lastAccessed": 1775558875492,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/package.json",
+      "accessCount": 1,
+      "lastAccessed": 1775558875707,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/package.json",
+      "accessCount": 1,
+      "lastAccessed": 1775558875925,
+      "type": "file"
+    },
+    {
+      "path": "server/src/index.js",
+      "accessCount": 1,
+      "lastAccessed": 1775558878907,
+      "type": "file"
+    },
+    {
+      "path": "server/src/engine/x01.js",
+      "accessCount": 1,
+      "lastAccessed": 1775558879103,
+      "type": "file"
+    },
+    {
+      "path": "server/src/db/connection.js",
+      "accessCount": 1,
+      "lastAccessed": 1775558879307,
+      "type": "file"
+    },
+    {
+      "path": "server/src/routes/players.js",
+      "accessCount": 1,
+      "lastAccessed": 1775558879738,
+      "type": "file"
+    },
+    {
+      "path": "server/src/routes/stats.js",
+      "accessCount": 1,
+      "lastAccessed": 1775558879845,
+      "type": "file"
+    },
+    {
+      "path": "server/src/routes/matches.js",
+      "accessCount": 1,
+      "lastAccessed": 1775558879890,
+      "type": "file"
+    },
+    {
+      "path": "server/src/db/schema.sql",
+      "accessCount": 1,
+      "lastAccessed": 1775558882682,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/App.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558882860,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/App.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558883430,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/Home.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558886305,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/NewMatch.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558886516,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/ScoreEntry.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558886706,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/screens/Home.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558886980,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/screens/Match.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558887127,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/dartboard/Dartboard.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558887278,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/Players.svelte",
+      "accessCount": 1,
+      "lastAccessed": 1775558890192,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.yml",
+      "accessCount": 1,
+      "lastAccessed": 1775558890617,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }
