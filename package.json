@@ -1,0 +1,24 @@
+{
+  "name": "dartsleague",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Self-hosted garage darts scoring system",
+  "scripts": {
+    "dev": "concurrently -n server,ctrl,tv -c cyan,green,magenta \"npm run dev -w server\" \"npm run dev -w web/controller\" \"npm run dev -w web/tv\"",
+    "build": "npm run build -w web/controller && npm run build -w web/tv",
+    "start": "npm run start -w server",
+    "test": "npm run test -w server",
+    "install:all": "npm install && npm install -w server && npm install -w web/controller && npm install -w web/tv"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "workspaces": [
+    "server",
+    "web/controller",
+    "web/tv"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,7 +1,0 @@
-{
-  "tool_name": "mcp__stitch__generate_screen_from_text",
-  "tool_input_preview": "{\"projectId\":\"17294637140371761835\",\"deviceType\":\"MOBILE\",\"modelId\":\"GEMINI_3_1_PRO\",\"prompt\":\"Darts scoring app — Phone controller Score Entry screen. Dark #0a0a14 background, cinematic sports feel.\\...",
-  "error": "The operation timed out.",
-  "timestamp": "2026-04-07T10:53:15.554Z",
-  "retry_count": 1
-}

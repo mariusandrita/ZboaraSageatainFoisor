@@ -47,9 +47,219 @@
   },
   "hotPaths": [
     {
+      "path": "server/src/routes/matches.js",
+      "accessCount": 41,
+      "lastAccessed": 1775629345705,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/ScoreEntry.svelte",
+      "accessCount": 34,
+      "lastAccessed": 1775626921186,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/screens/Match.svelte",
+      "accessCount": 21,
+      "lastAccessed": 1775629391540,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/NewMatch.svelte",
+      "accessCount": 19,
+      "lastAccessed": 1775627719180,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/Home.svelte",
+      "accessCount": 17,
+      "lastAccessed": 1775627202877,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/dartboard/Dartboard.svelte",
+      "accessCount": 16,
+      "lastAccessed": 1775626934771,
+      "type": "file"
+    },
+    {
+      "path": "server/src/engine/x01.js",
+      "accessCount": 15,
+      "lastAccessed": 1775626912107,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/App.svelte",
+      "accessCount": 14,
+      "lastAccessed": 1775626920254,
+      "type": "file"
+    },
+    {
+      "path": "server/src/stats/aggregate.js",
+      "accessCount": 14,
+      "lastAccessed": 1775629356193,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/App.svelte",
+      "accessCount": 12,
+      "lastAccessed": 1775627226739,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/Players.svelte",
+      "accessCount": 12,
+      "lastAccessed": 1775627473193,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 11,
+      "lastAccessed": 1775629624269,
+      "type": "directory"
+    },
+    {
+      "path": "server/src/routes/players.js",
+      "accessCount": 9,
+      "lastAccessed": 1775627472795,
+      "type": "file"
+    },
+    {
+      "path": "server/src/index.js",
+      "accessCount": 9,
+      "lastAccessed": 1775629531707,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/MatchSummary.svelte",
+      "accessCount": 8,
+      "lastAccessed": 1775567370538,
+      "type": "file"
+    },
+    {
+      "path": "server/src/routes/stats.js",
+      "accessCount": 7,
+      "lastAccessed": 1775626911949,
+      "type": "file"
+    },
+    {
+      "path": "server/src/realtime/events.js",
+      "accessCount": 7,
+      "lastAccessed": 1775626915080,
+      "type": "file"
+    },
+    {
+      "path": "server/src/realtime/room.js",
+      "accessCount": 7,
+      "lastAccessed": 1775626915283,
+      "type": "file"
+    },
+    {
+      "path": "web/shared/ws-client.js",
+      "accessCount": 7,
+      "lastAccessed": 1775626915934,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/screens/Celebration.svelte",
+      "accessCount": 7,
+      "lastAccessed": 1775628823434,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/vite.config.js",
+      "accessCount": 7,
+      "lastAccessed": 1775629627234,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/vite.config.js",
+      "accessCount": 7,
+      "lastAccessed": 1775629627292,
+      "type": "file"
+    },
+    {
+      "path": "server/src/db/connection.js",
+      "accessCount": 5,
+      "lastAccessed": 1775626916011,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/stores/match.js",
+      "accessCount": 4,
+      "lastAccessed": 1775626920738,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/package.json",
+      "accessCount": 4,
+      "lastAccessed": 1775626933913,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/package.json",
+      "accessCount": 4,
+      "lastAccessed": 1775626934248,
+      "type": "file"
+    },
+    {
+      "path": "server/src/db/schema.sql",
+      "accessCount": 4,
+      "lastAccessed": 1775626937216,
+      "type": "file"
+    },
+    {
+      "path": "Dockerfile",
+      "accessCount": 4,
+      "lastAccessed": 1775629532146,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/screens/Home.svelte",
+      "accessCount": 3,
+      "lastAccessed": 1775565575315,
+      "type": "file"
+    },
+    {
       "path": "package.json",
-      "accessCount": 1,
-      "lastAccessed": 1775558872318,
+      "accessCount": 3,
+      "lastAccessed": 1775626899944,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.yml",
+      "accessCount": 3,
+      "lastAccessed": 1775626900079,
+      "type": "file"
+    },
+    {
+      "path": "server/package.json",
+      "accessCount": 3,
+      "lastAccessed": 1775626909981,
+      "type": "file"
+    },
+    {
+      "path": "server/src/realtime/io-instance.js",
+      "accessCount": 3,
+      "lastAccessed": 1775626937430,
+      "type": "file"
+    },
+    {
+      "path": "web/tv/src/dartboard/segments.js",
+      "accessCount": 3,
+      "lastAccessed": 1775626937902,
+      "type": "file"
+    },
+    {
+      "path": "docker-compose.dev.yml",
+      "accessCount": 2,
+      "lastAccessed": 1775626900227,
+      "type": "file"
+    },
+    {
+      "path": "server/src/engine/checkouts.js",
+      "accessCount": 2,
+      "lastAccessed": 1775626915510,
       "type": "file"
     },
     {
@@ -59,123 +269,81 @@
       "type": "file"
     },
     {
-      "path": "server/package.json",
+      "path": "PLAN.md",
       "accessCount": 1,
-      "lastAccessed": 1775558875492,
+      "lastAccessed": 1775559300719,
       "type": "file"
     },
     {
-      "path": "web/controller/package.json",
+      "path": "docs/ARCHITECTURE.md",
       "accessCount": 1,
-      "lastAccessed": 1775558875707,
+      "lastAccessed": 1775559304292,
       "type": "file"
     },
     {
-      "path": "web/tv/package.json",
+      "path": "server/src/engine/x01.test.js",
       "accessCount": 1,
-      "lastAccessed": 1775558875925,
+      "lastAccessed": 1775559676821,
       "type": "file"
     },
     {
-      "path": "server/src/index.js",
+      "path": "web/controller/index.html",
       "accessCount": 1,
-      "lastAccessed": 1775558878907,
+      "lastAccessed": 1775560115539,
       "type": "file"
     },
     {
-      "path": "server/src/engine/x01.js",
+      "path": "web/controller/src/main.js",
       "accessCount": 1,
-      "lastAccessed": 1775558879103,
+      "lastAccessed": 1775560123269,
       "type": "file"
     },
     {
-      "path": "server/src/db/connection.js",
+      "path": "web/tv/index.html",
       "accessCount": 1,
-      "lastAccessed": 1775558879307,
+      "lastAccessed": 1775560127336,
       "type": "file"
     },
     {
-      "path": "server/src/routes/players.js",
+      "path": "web/tv/src/main.js",
       "accessCount": 1,
-      "lastAccessed": 1775558879738,
+      "lastAccessed": 1775560132351,
       "type": "file"
     },
     {
-      "path": "server/src/routes/stats.js",
+      "path": "ops/systemd/dartsleague-backend.service",
       "accessCount": 1,
-      "lastAccessed": 1775558879845,
+      "lastAccessed": 1775560397739,
       "type": "file"
     },
     {
-      "path": "server/src/routes/matches.js",
+      "path": "ops/systemd/dartsleague-kiosk.service",
       "accessCount": 1,
-      "lastAccessed": 1775558879890,
+      "lastAccessed": 1775560401092,
       "type": "file"
     },
     {
-      "path": "server/src/db/schema.sql",
+      "path": "ops/systemd/dartsleague-backup.timer",
       "accessCount": 1,
-      "lastAccessed": 1775558882682,
+      "lastAccessed": 1775560402230,
       "type": "file"
     },
     {
-      "path": "web/controller/src/App.svelte",
+      "path": "ops/scripts/install.sh",
       "accessCount": 1,
-      "lastAccessed": 1775558882860,
+      "lastAccessed": 1775560415636,
       "type": "file"
     },
     {
-      "path": "web/tv/src/App.svelte",
+      "path": "ops/scripts/backup.sh",
       "accessCount": 1,
-      "lastAccessed": 1775558883430,
+      "lastAccessed": 1775560418174,
       "type": "file"
     },
     {
-      "path": "web/controller/src/screens/Home.svelte",
+      "path": "server/.env",
       "accessCount": 1,
-      "lastAccessed": 1775558886305,
-      "type": "file"
-    },
-    {
-      "path": "web/controller/src/screens/NewMatch.svelte",
-      "accessCount": 1,
-      "lastAccessed": 1775558886516,
-      "type": "file"
-    },
-    {
-      "path": "web/controller/src/screens/ScoreEntry.svelte",
-      "accessCount": 1,
-      "lastAccessed": 1775558886706,
-      "type": "file"
-    },
-    {
-      "path": "web/tv/src/screens/Home.svelte",
-      "accessCount": 1,
-      "lastAccessed": 1775558886980,
-      "type": "file"
-    },
-    {
-      "path": "web/tv/src/screens/Match.svelte",
-      "accessCount": 1,
-      "lastAccessed": 1775558887127,
-      "type": "file"
-    },
-    {
-      "path": "web/tv/src/dartboard/Dartboard.svelte",
-      "accessCount": 1,
-      "lastAccessed": 1775558887278,
-      "type": "file"
-    },
-    {
-      "path": "web/controller/src/screens/Players.svelte",
-      "accessCount": 1,
-      "lastAccessed": 1775558890192,
-      "type": "file"
-    },
-    {
-      "path": "docker-compose.yml",
-      "accessCount": 1,
-      "lastAccessed": 1775558890617,
+      "lastAccessed": 1775560906878,
       "type": "file"
     }
   ],

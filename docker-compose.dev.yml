@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  dartsleague-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "80:80"
+      - "5174:5174"
+      - "5175:5175"
+    volumes:
+      - ./server/src:/app/server/src
+      - ./web:/app/web
+      - db_data:/data
+    environment:
+      - NODE_ENV=development
+      - PORT=80
+      - DB_PATH=/data/dartsleague.db
+      - LOG_LEVEL=debug
+    restart: unless-stopped
+
+volumes:
+  db_data:
