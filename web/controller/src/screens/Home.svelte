@@ -42,7 +42,7 @@
   <div class="hero">
     <div class="hero-icon">🎯</div>
     <h1>DartsLeague</h1>
-    <p class="tagline">Editia Garaj</p>
+    <p class="tagline">Editia Foisor</p>
     <div class="conn-pill" class:online={$connected}>
       <span class="conn-dot"></span>
       {$connected ? 'Conectat' : 'Se conectează…'}

@@ -9,6 +9,7 @@ services:
       - "80:80"
       - "5174:5174"
       - "5175:5175"
+      - "5176:5176"
     volumes:
       - ./server/src:/app/server/src
       - ./web:/app/web

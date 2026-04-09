@@ -29,6 +29,26 @@ export function openDb(dbPath = process.env.DB_PATH || './dartsleague.db') {
 
   // Migrations (idempotent)
   try { _db.exec('ALTER TABLE players ADD COLUMN photo TEXT'); } catch {}
+  try { _db.exec('ALTER TABLE matches ADD COLUMN public_code TEXT'); } catch {}
+  try { _db.exec('ALTER TABLE matches ADD COLUMN active_elapsed_ms INTEGER NOT NULL DEFAULT 0'); } catch {}
+  try { _db.exec('ALTER TABLE matches ADD COLUMN controller_opened_at TEXT'); } catch {}
+  try { _db.exec('ALTER TABLE match_players ADD COLUMN general_avg_start REAL NOT NULL DEFAULT 0'); } catch {}
+  try { _db.exec('CREATE UNIQUE INDEX idx_matches_public_code ON matches(public_code)'); } catch {}
+  _db.exec(`
+    CREATE TABLE IF NOT EXISTS awards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+      leg_id INTEGER NOT NULL REFERENCES legs(id) ON DELETE CASCADE,
+      dart_id INTEGER NOT NULL REFERENCES darts(id) ON DELETE CASCADE,
+      player_id INTEGER NOT NULL REFERENCES players(id),
+      kind TEXT NOT NULL,
+      value INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE (dart_id, kind)
+    );
+    CREATE INDEX IF NOT EXISTS idx_awards_player_kind ON awards(player_id, kind);
+    CREATE INDEX IF NOT EXISTS idx_awards_match ON awards(match_id);
+  `);
 
   return _db;
 }

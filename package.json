@@ -4,11 +4,11 @@
   "private": true,
   "description": "Self-hosted garage darts scoring system",
   "scripts": {
-    "dev": "concurrently -n server,ctrl,tv -c cyan,green,magenta \"npm run dev -w server\" \"npm run dev -w web/controller\" \"npm run dev -w web/tv\"",
-    "build": "npm run build -w web/controller && npm run build -w web/tv",
+    "dev": "concurrently -n server,ctrl,tv,manage -c cyan,green,magenta,yellow \"npm run dev -w server\" \"npm run dev -w web/controller\" \"npm run dev -w web/tv\" \"npm run dev -w web/manage\"",
+    "build": "npm run build -w web/controller && npm run build -w web/tv && npm run build -w web/manage",
     "start": "npm run start -w server",
     "test": "npm run test -w server",
-    "install:all": "npm install && npm install -w server && npm install -w web/controller && npm install -w web/tv"
+    "install:all": "npm install && npm install -w server && npm install -w web/controller && npm install -w web/tv && npm install -w web/manage"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
@@ -16,7 +16,8 @@
   "workspaces": [
     "server",
     "web/controller",
-    "web/tv"
+    "web/tv",
+    "web/manage"
   ],
   "engines": {
     "node": ">=20.0.0"

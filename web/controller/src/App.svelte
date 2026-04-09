@@ -15,6 +15,11 @@
   // Context is set at init time; ws is accessed via closure so it's always current
   setContext('ws', { get: () => ws });
 
+  function applyMatchState(full) {
+    match.set(full);
+    turnState.set(full?.turnState ?? null);
+  }
+
   async function loadPlayers() {
     try {
       const res = await fetch('/api/players');
@@ -22,11 +27,34 @@
     } catch (e) { console.error('Failed to load players', e); }
   }
 
-  function handleResume(full) {
-    match.set(full);
-    turnState.set(full.turnState ?? null);
+  async function handleResume(full) {
+    try {
+      const res = await fetch(`/api/matches/${full.id}/resume`, { method: 'POST' });
+      if (res.ok) {
+        full = await res.json();
+      }
+    } catch (e) {
+      console.error('Failed to resume match on TV', e);
+    }
+
+    applyMatchState(full);
     ws?.join(full.id, 'controller');
     screen.set('score');
+  }
+
+  async function refreshMatch(matchId) {
+    if (!matchId) return null;
+
+    try {
+      const res = await fetch(`/api/matches/${matchId}`);
+      if (!res.ok) throw new Error(`failed to refresh match ${matchId}`);
+      const full = await res.json();
+      applyMatchState(full);
+      return full;
+    } catch (e) {
+      console.error('Failed to refresh match state', e);
+      return null;
+    }
   }
 
   onMount(async () => {
@@ -36,18 +64,17 @@
     ws.socket.on('disconnect', () => connected.set(false));
 
     ws.onMatchState((state) => {
-      match.set(state);
-      turnState.set(state.turnState ?? null);
+      applyMatchState(state);
     });
 
     ws.onDartAdded((_, ts)       => turnState.set(ts));
     ws.onTurnEnded((ts)          => turnState.set(ts));
     ws.onLegWon(({ matchState }) => {
-      match.set(matchState);
-      turnState.set(matchState.turnState ?? null);
+      applyMatchState(matchState);
     });
-    ws.onMatchWon((_) => {
-      summaryMatchId = $match?.id ?? null;
+    ws.onMatchWon(async ({ matchId }) => {
+      summaryMatchId = matchId ?? $match?.id ?? null;
+      await refreshMatch(summaryMatchId);
       screen.set('summary');
     });
 
@@ -58,10 +85,20 @@
 
   function handleStarted(e) {
     const full = e.detail;
-    match.set(full);
-    turnState.set(full.turnState ?? null);
+    applyMatchState(full);
     ws?.join(full.id, 'controller');
     screen.set('score');
+  }
+
+  async function exitMatchView() {
+    const matchId = summaryMatchId ?? $match?.id ?? null;
+    if (matchId) {
+      try {
+        await fetch(`/api/matches/${matchId}/exit`, { method: 'POST' });
+      } catch (e) {
+        console.error('Failed to notify TV about exit', e);
+      }
+    }
   }
 </script>
 
@@ -75,17 +112,17 @@
   {:else if $screen === 'players'}
     <Players on:back={() => screen.set('home')} on:refresh={loadPlayers} />
   {:else if $screen === 'newMatch'}
-    <NewMatch on:back={() => screen.set('home')} on:started={handleStarted} />
+    <NewMatch {ws} on:back={() => screen.set('home')} on:started={handleStarted} />
   {:else if $screen === 'score'}
     <ScoreEntry
-      on:exit={() => screen.set('home')}
+      on:exit={() => { screen.set('home'); resetMatch(); }}
       on:finish={() => { summaryMatchId = $match?.id ?? null; screen.set('summary'); }}
     />
   {:else if $screen === 'summary'}
     <MatchSummary
       matchId={summaryMatchId}
-      on:home={() => { screen.set('home'); resetMatch(); }}
-      on:newmatch={() => { resetMatch(); screen.set('newMatch'); }}
+      on:home={async () => { await exitMatchView(); screen.set('home'); resetMatch(); }}
+      on:newmatch={async () => { await exitMatchView(); resetMatch(); screen.set('newMatch'); }}
     />
   {/if}
 </main>

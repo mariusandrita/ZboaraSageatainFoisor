@@ -1,166 +1,136 @@
-# DartsLeague - App Analysis and Working Context
+# DartsLeague - Current Project Context
 
-## What This App Is
+## Overview
 
-DartsLeague is a self-hosted darts scoring system with three main parts:
+DartsLeague is a self-hosted darts scoring platform for garage or club play. It is built around one Node.js backend that serves APIs, websocket updates, and static frontend apps.
 
-- `server/`: Fastify + Socket.IO + SQLite backend
-- `web/controller/`: mobile-first Svelte controller used to create matches and enter darts
-- `web/tv/`: Svelte TV/kiosk display for lobby stats, live scoring, and celebrations
+The project now has four user-facing surfaces:
 
-The server is the source of truth. Both frontend clients are thin renderers that fetch snapshots and subscribe to live updates over Socket.IO.
+- `/` - mobile-first controller for match creation and dart entry
+- `/tv` - TV/kiosk experience for lobby stats, live matches, celebrations, and match recap
+- `/manage` - management hub for badge assets, celebration catalog, experimental celebration ideas, and the proposed tournament structure
+- `/api/*` - backend HTTP API used by all clients
 
-## Current Runtime Model
+## What The App Does Today
 
-The implementation today is:
+### Match flow
 
-- one Node.js server process
-- SQLite database on local disk
+- create X01 matches with `301`, `501`, or `701`
+- enable `double out`
+- play with up to 10 players
+- keep selected order or randomize throw order
+- rotate leg starters based on darts rules
+- generate public match IDs only after a match is actually finished
+- exclude aborted matches from the finished-match identity/stats flow
+- support undo for the latest dart
+
+### TV experience
+
+- rotating waiting lobby with leaderboards and spotlight player stats
+- live match screen with current player focus, last turn darts, live badges, checkout hint, and dartboard highlight
+- celebration overlays for scoring, finishes, funny awards, busts, and leg wins
+- end-of-match TV recap with averages before/after and badges gained in the match
+
+### Badge and celebration system
+
+- awards are persisted in the backend and aggregated per player
+- badge images are now image-backed across controller and TV
+- custom badge assets are loaded from `server/public/assets/badges`
+- when a custom image is missing, the UI falls back to an auto-generated badge image
+- a separate management hub at `/manage` shows which badges have custom artwork and which still use fallback images
+
+### Controller experience
+
+- player management with colors and touch-friendly photo editing
+- live score entry with checkout suggestions
+- Romanian score reader using browser `speechSynthesis`
+- post-match summary with averages, deltas, and badge results
+
+### Tournament planning
+
+There is not yet a full tournament engine in the app, but the project now includes a documented and surfaced proposal in `/manage`:
+
+- recommended format: round robin groups followed by knockout
+- proposed minimum data model: tournament, entries, group standings, knockout bracket, match links
+- chosen because it can reuse the existing X01 match lifecycle with minimal scoring-engine changes
+
+## Current Architecture
+
+### Backend
+
+`server/` is the source of truth.
+
+- Fastify for HTTP
 - Socket.IO namespace at `/live`
-- static frontend assets served by Fastify from `server/public`
+- SQLite via `better-sqlite3`
+- static assets served from `server/public`
 
-Important route behavior from the current code:
+Important backend files:
 
-- controller is served at `/`
-- TV UI is served at `/tv`
-- API is served under `/api/*`
-- health check is `GET /health`
+- `server/src/index.js` - Fastify bootstrap, static serving, route registration, Socket.IO attach
+- `server/src/db/connection.js` - database open/bootstrap and runtime migrations
+- `server/src/db/schema.sql` - base schema
+- `server/src/engine/x01.js` - pure X01 scoring engine
+- `server/src/routes/matches.js` - match lifecycle, darts, undo, finish handling, award emission
+- `server/src/routes/stats.js` - leaderboard/lobby/match stats endpoints
+- `server/src/routes/catalog.js` - management API for badges and celebrations
+- `server/src/catalog.js` - centralized badge and celebration catalog definitions
+- `server/src/stats/aggregate.js` - SQL-heavy stats aggregation
 
-## Repo Map
+### Frontends
 
-```text
-server/
-  src/index.js                Fastify bootstrap, static serving, Socket.IO attach
-  src/db/connection.js        SQLite open/bootstrap, WAL mode, simple migration
-  src/db/schema.sql           base schema and SQL views
-  src/engine/x01.js           pure X01 scoring engine
-  src/engine/checkouts.js     checkout suggestions
-  src/routes/players.js       player CRUD + lifetime stats endpoint
-  src/routes/matches.js       match lifecycle, darts, undo, exit
-  src/routes/stats.js         leaderboard, match stats, lobby stats
-  src/realtime/events.js      shared event names
-  src/realtime/room.js        `/live` socket handlers
-  src/stats/aggregate.js      SQL-heavy stats aggregation
+`web/controller/`
 
-web/controller/
-  src/App.svelte              controller app shell and websocket wiring
-  src/stores/match.js         shared controller stores
-  src/screens/Home.svelte
-  src/screens/NewMatch.svelte
-  src/screens/ScoreEntry.svelte
-  src/screens/Players.svelte
-  src/screens/MatchSummary.svelte
+- Svelte app served at `/`
+- manages players, match creation, score entry, and match summary
 
-web/tv/
-  src/App.svelte              TV app shell and websocket wiring
-  src/screens/Lobby.svelte    rotating stats/lobby screen
-  src/screens/Match.svelte    live match layout
-  src/screens/Celebration.svelte
-  src/dartboard/Dartboard.svelte
+`web/tv/`
 
-web/shared/ws-client.js       shared Socket.IO client wrapper
-Dockerfile                    production image build
-docker-compose.yml            production compose
-docker-compose.dev.yml        dev compose, currently references missing Dockerfile.dev
-ops/                          install, backup, and systemd units
-```
+- Svelte app served at `/tv`
+- swaps between lobby, live match, celebrations, and match recap
 
-## Backend Flow
+`web/manage/`
 
-### Server bootstrap
+- Svelte app served at `/manage`
+- shows badge asset status, celebration catalog, experimental ideas, and tournament structure proposal
 
-`server/src/index.js` does the following:
+`web/shared/`
 
-1. loads env via `dotenv/config`
-2. opens SQLite with `openDb()`
-3. creates Fastify with pretty logs outside production
-4. enables CORS for all origins
-5. serves static assets from `server/public`
-6. registers players, matches, and stats routes
-7. attaches Socket.IO to the Fastify HTTP server
+- shared websocket client
+- shared badge rendering helpers and component
 
-Defaults:
+## URLs And Runtime Behavior
 
-- `PORT=80`
-- `HOST=0.0.0.0`
-- `DB_PATH=./dartsleague.db` unless overridden
+### Pages
 
-### Database
+- `/` - controller
+- `/tv` - TV app
+- `/manage` - management hub
+- `/health` - health endpoint
 
-SQLite is opened through `better-sqlite3` in [server/src/db/connection.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/db/connection.js).
+### API prefixes
 
-Runtime DB behavior:
+- `/api/players`
+- `/api/matches`
+- `/api/stats`
+- `/api/catalog`
 
-- `journal_mode = WAL`
-- `foreign_keys = ON`
-- `synchronous = NORMAL`
-- schema bootstrapped from [server/src/db/schema.sql](/Users/mariusandrita/Dockers/DartsLeague/server/src/db/schema.sql)
-- one idempotent migration adds `players.photo`
+### Management API
 
-Core tables:
+- `GET /api/catalog/management`
 
-- `players`
-- `matches`
-- `match_players`
-- `legs`
-- `darts`
+Returns:
 
-Core views:
-
-- `v_player_match_avg`
-- `v_checkout_pct`
-
-### Match engine
-
-[server/src/engine/x01.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/engine/x01.js) is a pure X01 engine. It owns:
-
-- leg initialization
-- dart validation
-- bust logic
-- checkout handling
-- turn advancement
-- replay from persisted dart events
-
-Behavior worth remembering:
-
-- `25 x 3` is invalid
-- bust on score below zero
-- with double-out enabled, finishing on non-double is a bust
-- with double-out enabled, leaving `1` is a bust
-- third dart auto-ends the turn
-- bust also ends the turn immediately
-
-### Match route behavior
-
-[server/src/routes/matches.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/routes/matches.js) is the main orchestration layer. It:
-
-- creates matches
-- starts the first leg
-- rebuilds current state from stored darts
-- persists every dart as an event row
-- increments leg wins
-- creates next legs automatically
-- supports undo of the most recent dart, including reopening a finished leg
-- emits Socket.IO events after important state changes
-
-Live match endpoints implemented now:
-
-- `GET /api/matches`
-- `POST /api/matches`
-- `GET /api/matches/:id`
-- `POST /api/matches/:id/start`
-- `POST /api/matches/:id/abort`
-- `POST /api/matches/:id/darts`
-- `POST /api/matches/:id/undo`
-- `POST /api/matches/:id/exit`
-
-Note: websocket `turn:skip` exists in [server/src/realtime/room.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/realtime/room.js), but there is no `POST /api/matches/:id/skip` route yet.
+- badge asset directory and supported extensions
+- badge catalog with custom image status and found files
+- active celebration catalog
+- experimental celebration ideas
 
 ## Realtime Contract
 
 Socket.IO namespace: `/live`
 
-Server-to-client events are defined in [server/src/realtime/events.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/realtime/events.js):
+Important server-to-client events:
 
 - `match:started`
 - `match:state`
@@ -170,94 +140,74 @@ Server-to-client events are defined in [server/src/realtime/events.js](/Users/ma
 - `match:won`
 - `celebration`
 - `match:paused`
+- `match:setup`
 
-Client-to-server events:
+Important client-to-server events:
 
 - `join`
 - `dart:submit`
 - `turn:undo`
 - `turn:skip`
+- `match:setup:update`
 
-Room naming is `match:<id>`.
+The shared client wrapper is in `web/shared/ws-client.js`.
 
-The shared client wrapper lives in [web/shared/ws-client.js](/Users/mariusandrita/Dockers/DartsLeague/web/shared/ws-client.js) and automatically re-joins a room after reconnect.
+## Badge Assets
 
-## Frontend Analysis
+Badge artwork lives in:
 
-### Controller app
+- `server/public/assets/badges`
 
-[web/controller/src/App.svelte](/Users/mariusandrita/Dockers/DartsLeague/web/controller/src/App.svelte) manages a simple screen-state app, not a URL router.
+Supported formats:
 
-Primary screens:
+- `.png`
+- `.webp`
+- `.jpg`
+- `.jpeg`
+- `.svg`
 
-- home
-- players
-- new match
-- score entry
-- summary
+Asset naming rule:
 
-Key behavior:
+- use the badge `kind` as the filename, for example `breakfast.png`, `180.webp`, `bullFinish.svg`
 
-- loads players from `/api/players`
-- resumes live matches from the home screen
-- joins the live match room as role `controller`
-- updates local stores from websocket snapshots and turn events
+Reference and notes are documented in:
 
-The controller store lives in [web/controller/src/stores/match.js](/Users/mariusandrita/Dockers/DartsLeague/web/controller/src/stores/match.js).
+- `server/public/assets/badges/README.md`
 
-### TV app
+## Romanian Score Reader
 
-[web/tv/src/App.svelte](/Users/mariusandrita/Dockers/DartsLeague/web/tv/src/App.svelte) swaps between:
+The score reader is implemented in:
 
-- lobby when there is no live match
-- live match screen during play
-- celebration overlays and short dart flash overlays
+- `web/controller/src/screens/ScoreEntry.svelte`
 
-Key behavior:
+Behavior:
 
-- on connect, fetches `GET /api/matches?status=live`
-- loads the first live match in the list
-- joins that room as role `tv`
-- falls back to the lobby when matches end or are paused
+- toggleable from the score entry header
+- uses browser `speechSynthesis`
+- prefers Romanian voices if available
+- remembers enabled state and selected voice in `localStorage`
+- announces dart calls, busts, remaining score, and end-of-turn totals when appropriate
 
-### Lobby screen
+Important note:
 
-[web/tv/src/screens/Lobby.svelte](/Users/mariusandrita/Dockers/DartsLeague/web/tv/src/screens/Lobby.svelte) is already richer than a basic idle page.
+- this depends on browser voice availability, so different devices may expose different Romanian voices
 
-It:
+## Celebration Notes
 
-- fetches `/api/stats/lobby`
-- refreshes every 60 seconds
-- rotates spotlight scenes every 8 seconds
-- shows leaderboard on the left
-- cycles through recent results, records, triples leaderboard, 100+ leaderboard, win rates, highlights, and recent 100+ turns
-- renders a scrolling ticker at the bottom
+Implemented celebration and award logic is split between:
 
-### Match screen
+- `server/src/engine/x01.js`
+- `server/src/routes/matches.js`
+- `web/tv/src/screens/Celebration.svelte`
+- `server/src/catalog.js`
 
-[web/tv/src/screens/Match.svelte](/Users/mariusandrita/Dockers/DartsLeague/web/tv/src/screens/Match.svelte) uses a two-column layout:
+Important nuance:
 
-- left side: current player, remaining score, current darts, last turn, checkout hint, dartboard
-- right side: player scoreboard with legs won
-
-It also keeps the most recent dart marker visible briefly after a turn resets.
-
-## Stats Layer
-
-[server/src/stats/aggregate.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/stats/aggregate.js) powers most reporting.
-
-It currently provides:
-
-- lifetime player stats
-- per-match stats
-- leaderboard by 3-dart average
-- lobby data including recent matches, high finish, most 180s, best match average, recent 100+ turns, win rates, streaks, high triples, and 100+ leaderboards
-
-This file is SQL-centric and one of the highest-leverage places for TV/dashboard feature work.
+- `Robin Hood` is intentionally documented as `manual-only` in the management hub because it cannot be reliably detected from score input alone without physical dart-hit telemetry
 
 ## Commands
 
-Local workspace commands:
+Root workspace commands:
 
 ```bash
 npm install
@@ -266,62 +216,61 @@ npm run build
 npm run test
 ```
 
-Workspace script notes from [package.json](/Users/mariusandrita/Dockers/DartsLeague/package.json):
+What they do:
 
-- `npm run dev` starts server + controller Vite + TV Vite concurrently
-- `npm run build` builds both frontend apps
-- `npm run test` runs server Vitest tests
+- `npm run dev` starts server + controller + TV + manage
+- `npm run build` builds controller + TV + manage into `server/public`
+- `npm run test` runs server tests
 
-Server-only commands:
+Useful workspace commands:
 
 ```bash
 npm run dev -w server
+npm run dev -w web/controller
+npm run dev -w web/tv
+npm run dev -w web/manage
 npm run test -w server
 ```
 
-## Docker and Deploy Notes
+## Docker
 
-Production container files are present:
+Production files:
 
-- [Dockerfile](/Users/mariusandrita/Dockers/DartsLeague/Dockerfile)
-- [docker-compose.yml](/Users/mariusandrita/Dockers/DartsLeague/docker-compose.yml)
+- `Dockerfile`
+- `docker-compose.yml`
 
-Current production image behavior:
+Development files:
 
-- builds both web apps first
-- installs production server dependencies
-- copies built web assets into `server/public`
-- serves DB from `/data/dartsleague.db`
-- exposes port `80`
+- `Dockerfile.dev`
+- `docker-compose.dev.yml`
 
-Important gap:
+Current production Docker behavior:
 
-- [docker-compose.dev.yml](/Users/mariusandrita/Dockers/DartsLeague/docker-compose.dev.yml) references `Dockerfile.dev`, but that file does not exist
+- installs build dependencies for `better-sqlite3`
+- builds controller, TV, and manage frontends
+- copies built assets into `server/public`
+- serves SQLite from `/data/dartsleague.db`
 
-## Known Mismatches and Gotchas
+Current dev compose ports:
 
-These are worth keeping in mind before making changes:
+- `80`
+- `5174`
+- `5175`
+- `5176`
 
-- `CLAUDE.md` previously said controller lived at `/controller/`, but the current server serves it at `/`
-- `players.photo` is used by routes and stats, but the base schema adds it only through a runtime migration in `connection.js`
-- `turn:skip` websocket handling exists, but no matching REST route exists yet
-- the TV app loads only the first live match returned by `/api/matches?status=live`
-- the root `build` script builds the web apps but does not itself place them into `server/public`; the Dockerfile handles that copy for container builds
-- local dev without prebuilt frontend assets may not reflect production static serving unless a separate build/copy step is done
+## Known Constraints And Gaps
 
-## Best Places To Work Depending On The Task
+- `turn:skip` is wired on the websocket side, but the REST route is still not implemented
+- `Robin Hood` cannot be auto-detected with the current score-only input model
+- tournament support is currently a documented proposal, not a persisted feature set
+- runtime migration logic still exists in `server/src/db/connection.js`; not every schema change is fully expressed only in `schema.sql`
+- `npm install` currently reports dependency vulnerabilities from upstream packages; no remediation work has been done yet in this pass
 
-- match rules, busts, replay bugs: [server/src/engine/x01.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/engine/x01.js)
-- match lifecycle, undo, websocket emissions: [server/src/routes/matches.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/routes/matches.js)
-- player and lobby stats: [server/src/stats/aggregate.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/stats/aggregate.js)
-- socket contract changes: [server/src/realtime/events.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/realtime/events.js) and [server/src/realtime/room.js](/Users/mariusandrita/Dockers/DartsLeague/server/src/realtime/room.js)
-- controller UX: `web/controller/src/screens/*`
-- TV presentation and motion: `web/tv/src/screens/*`
-- DB fields and constraints: [server/src/db/schema.sql](/Users/mariusandrita/Dockers/DartsLeague/server/src/db/schema.sql)
+## High-Leverage Areas For Future Work
 
-## Suggested Next Checks Before Bigger Changes
-
-- verify how frontend build output is expected to land in `server/public` during local development
-- decide whether `skip turn` should be fully implemented or removed
-- move the `photo` column into the authoritative SQL schema instead of relying on migration
-- decide how multiple simultaneous live matches should be handled on the TV side
+- `server/src/routes/matches.js` for lifecycle and award behavior
+- `server/src/stats/aggregate.js` for leaderboard and lobby stats
+- `web/tv/src/screens/*` for presentation work
+- `web/controller/src/screens/*` for player and score-entry UX
+- `server/src/catalog.js` for badge/celebration metadata
+- `web/manage/src/App.svelte` for admin and future tournament management UI

@@ -20,8 +20,11 @@ CREATE TABLE IF NOT EXISTS matches (
   starting_score  INTEGER NOT NULL CHECK (starting_score IN (301, 501, 701)),
   double_out      INTEGER NOT NULL DEFAULT 1,
   legs_to_win     INTEGER NOT NULL DEFAULT 1,
+  public_code     TEXT UNIQUE,
   created_at      TEXT NOT NULL DEFAULT (datetime('now')),
   started_at      TEXT,
+  active_elapsed_ms INTEGER NOT NULL DEFAULT 0,
+  controller_opened_at TEXT,
   ended_at        TEXT,
   winner_id       INTEGER REFERENCES players(id),
   status          TEXT NOT NULL DEFAULT 'pending'
@@ -33,6 +36,7 @@ CREATE TABLE IF NOT EXISTS match_players (
   player_id  INTEGER NOT NULL REFERENCES players(id),
   position   INTEGER NOT NULL,
   legs_won   INTEGER NOT NULL DEFAULT 0,
+  general_avg_start REAL NOT NULL DEFAULT 0,
   PRIMARY KEY (match_id, player_id)
 );
 
@@ -65,14 +69,30 @@ CREATE TABLE IF NOT EXISTS darts (
 CREATE INDEX IF NOT EXISTS idx_darts_leg ON darts(leg_id, turn_number, dart_in_turn);
 CREATE INDEX IF NOT EXISTS idx_darts_player ON darts(player_id);
 
+-- award events emitted during finished matches ---------------------------
+CREATE TABLE IF NOT EXISTS awards (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  match_id     INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+  leg_id       INTEGER NOT NULL REFERENCES legs(id) ON DELETE CASCADE,
+  dart_id      INTEGER NOT NULL REFERENCES darts(id) ON DELETE CASCADE,
+  player_id    INTEGER NOT NULL REFERENCES players(id),
+  kind         TEXT NOT NULL,
+  value        INTEGER,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (dart_id, kind)
+);
+
+CREATE INDEX IF NOT EXISTS idx_awards_player_kind ON awards(player_id, kind);
+CREATE INDEX IF NOT EXISTS idx_awards_match ON awards(match_id);
+
 -- derived view: 3-dart average per player per match ---------------------
 CREATE VIEW IF NOT EXISTS v_player_match_avg AS
 SELECT
   l.match_id,
   d.player_id,
-  ROUND(AVG(turn_total) * 1.0, 2) AS avg_3dart
+  ROUND((SUM(turn_total) * 3.0) / NULLIF(SUM(darts_thrown), 0), 2) AS avg_3dart
 FROM (
-  SELECT leg_id, player_id, turn_number, SUM(score_value) AS turn_total
+  SELECT leg_id, player_id, turn_number, SUM(score_value) AS turn_total, COUNT(*) AS darts_thrown
   FROM darts
   WHERE busted = 0
   GROUP BY leg_id, player_id, turn_number

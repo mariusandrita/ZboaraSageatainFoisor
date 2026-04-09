@@ -64,19 +64,28 @@ export function createWsClient() {
       socket.emit('turn:skip');
     },
 
+    updateMatchSetup(setup) {
+      socket.emit('match:setup:update', setup);
+    },
+
+    clearMatchSetup() {
+      socket.emit('match:setup:update', null);
+    },
+
     // ── Listeners ────────────────────────────────────────────────────
 
     onMatchStarted(cb) { socket.on('match:started', cb); },
     onMatchState(cb)   { socket.on('match:state',   cb); },
-    onDartAdded(cb)    { socket.on('dart:added',    ({ dart, turnState }) => cb(dart, turnState)); },
+    onDartAdded(cb)    { socket.on('dart:added',    ({ dart, turnState, playerAwards }) => cb(dart, turnState, playerAwards)); },
     onTurnEnded(cb)    { socket.on('turn:ended',    ({ turnState, nextPlayerId }) => cb(turnState, nextPlayerId)); },
     onLegWon(cb)       { socket.on('leg:won',       cb); },
     onMatchWon(cb)     { socket.on('match:won',     cb); },
     onCelebration(cb)  { socket.on('celebration',   cb); },
     onMatchPaused(cb)  { socket.on('match:paused',  cb); },
+    onMatchSetup(cb)   { socket.on('match:setup',   cb); },
 
     offAll() {
-      ['match:state','dart:added','turn:ended','leg:won','match:won','celebration','match:paused'].forEach((e) => socket.off(e));
+      ['match:state','dart:added','turn:ended','leg:won','match:won','celebration','match:paused','match:setup'].forEach((e) => socket.off(e));
     },
 
     disconnect() {

@@ -10,9 +10,23 @@
   let submitting = false;
   let lastAction = null;
   let apiError = '';
+  let scoreReaderEnabled = true;
+  let preferredVoiceUri = '';
+  let availableVoices = [];
+  let currentUtterance = null;
 
   // Safety net: if turnState is missing on mount, re-fetch from server
   onMount(async () => {
+    if (typeof window !== 'undefined') {
+      scoreReaderEnabled = window.localStorage.getItem('dl.scoreReader.enabled') !== '0';
+      preferredVoiceUri = window.localStorage.getItem('dl.scoreReader.voiceUri') ?? '';
+    }
+
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
     if ($match && !$turnState) {
       try {
         const res = await fetch(`/api/matches/${$match.id}`);
@@ -41,7 +55,9 @@
         const d = await res.json();
         apiError = d.error?.message ?? 'Error submitting dart';
       } else {
-        turnState.set(await res.json());
+        const nextTurnState = await res.json();
+        announceScore(segment, $multiplier, nextTurnState);
+        turnState.set(nextTurnState);
         apiError = '';
       }
     } catch(e) { apiError = e.message; }
@@ -75,6 +91,13 @@
   $: dartsInTurn = $turnState?.turn?.length ?? 0;
   $: isBusted = $turnState?.busted ?? false;
   $: hint = $turnState?.checkoutHint ?? null;
+  $: doubleOutActive = $match?.double_out === 1;
+  $: doubleOutNote = doubleOutActive
+    ? 'Double Out activ: trebuie să închizi pe dublă. Dacă ajungi la 1 sau la 0 fără dublă, tura devine BUST și scorul revine.'
+    : '';
+  $: sixtyOneTip = doubleOutActive && $currentRemaining === 61
+    ? 'La 61 nu merge doar 20, 20, 20. O variantă bună este 25 apoi D18.'
+    : '';
 
   function dartLabel(d) {
     if (!d) return '—';
@@ -92,6 +115,130 @@
       return `${p}${d.segment}`;
     }).join(' → ');
   }
+
+  function loadVoices() {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    availableVoices = window.speechSynthesis
+      .getVoices()
+      .filter((voice) => voice.lang?.toLowerCase().startsWith('ro'))
+      .sort((a, b) => Number(b.default) - Number(a.default) || a.name.localeCompare(b.name));
+
+    if (!preferredVoiceUri && availableVoices[0]?.voiceURI) {
+      preferredVoiceUri = availableVoices[0].voiceURI;
+    }
+  }
+
+  function updateScoreReader(value) {
+    scoreReaderEnabled = value;
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('dl.scoreReader.enabled', value ? '1' : '0');
+    }
+    if (!value) stopSpeaking();
+  }
+
+  function updateVoice(uri) {
+    preferredVoiceUri = uri;
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('dl.scoreReader.voiceUri', uri);
+    }
+  }
+
+  function stopSpeaking() {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    currentUtterance = null;
+  }
+
+  function selectedVoice() {
+    if (!availableVoices.length) return null;
+    return availableVoices.find((voice) => voice.voiceURI === preferredVoiceUri) ?? availableVoices[0] ?? null;
+  }
+
+  function speak(text) {
+    if (!scoreReaderEnabled || typeof window === 'undefined' || !('speechSynthesis' in window) || !text) return;
+
+    stopSpeaking();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ro-RO';
+    utterance.rate = 1.02;
+    utterance.pitch = 0.96;
+
+    const voice = selectedVoice();
+    if (voice) utterance.voice = voice;
+
+    currentUtterance = utterance;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function scoreWords(value) {
+    const num = Number(value);
+    if (!Number.isInteger(num) || num < 0 || num > 999) return String(value);
+    if (num === 0) return 'zero';
+
+    const under20 = ['','unu','doi','trei','patru','cinci','sase','sapte','opt','noua','zece','unsprezece','doisprezece','treisprezece','paisprezece','cincisprezece','saisprezece','saptesprezece','optsprezece','nouasprezece'];
+    const tens = ['', '', 'douazeci','treizeci','patruzeci','cincizeci','saizeci','saptezeci','optzeci','nouazeci'];
+    const hundreds = ['', 'o suta','doua sute','trei sute','patru sute','cinci sute','sase sute','sapte sute','opt sute','noua sute'];
+
+    const parts = [];
+    const h = Math.floor(num / 100);
+    const rest = num % 100;
+
+    if (h) parts.push(hundreds[h]);
+    if (rest) {
+      if (rest < 20) {
+        parts.push(under20[rest]);
+      } else {
+        const t = Math.floor(rest / 10);
+        const u = rest % 10;
+        parts.push(u ? `${tens[t]} si ${under20[u]}` : tens[t]);
+      }
+    }
+
+    return parts.join(' ').trim();
+  }
+
+  function dartCall(segment, mult) {
+    if (segment === 0) return 'ratat';
+    if (segment === 25 && mult === 2) return 'bull';
+    if (segment === 25) return 'douazeci si cinci';
+    if (mult === 3) return `triplu ${scoreWords(segment)}`;
+    if (mult === 2) return `dublu ${scoreWords(segment)}`;
+    return scoreWords(segment);
+  }
+
+  function announceScore(segment, mult, nextTurnState) {
+    if (!nextTurnState) return;
+
+    const spokenParts = [dartCall(segment, mult)];
+    const lastDart = nextTurnState.turn?.[nextTurnState.turn.length - 1] ?? null;
+    const busted = lastDart?.busted || nextTurnState.busted;
+
+    if (busted) {
+      spokenParts.push('bust');
+      speak(spokenParts.join('. '));
+      return;
+    }
+
+    const lastVisit = nextTurnState.lastTurnDarts ?? [];
+    const turnJustEnded = segment !== 0 && lastVisit.length > 0 && nextTurnState.turn?.length === 0;
+    if (turnJustEnded) {
+      const visitTotal = lastVisit.reduce((sum, dart) => sum + (dart.busted ? 0 : (dart.score_value ?? 0)), 0);
+      spokenParts.push(`total ${scoreWords(visitTotal)}`);
+    }
+
+    const currentId = nextTurnState.currentPlayerId;
+    const remaining = nextTurnState.remaining?.[$currentPlayer?.id] ?? nextTurnState.remaining?.[currentId];
+    if (Number.isInteger(remaining) && !nextTurnState.finished) {
+      spokenParts.push(`raman ${scoreWords(remaining)}`);
+    }
+
+    if (nextTurnState.finished) {
+      spokenParts.push('meci incheiat');
+    }
+
+    speak(spokenParts.join('. '));
+  }
 </script>
 
 <div class="score-entry">
@@ -101,7 +248,17 @@
       <div class="player-dot" style="background:{$currentPlayer?.color ?? '#e63946'}"></div>
       <span class="player-name">{$currentPlayer?.name ?? '—'}</span>
     </div>
-    <button class="abort-btn" on:click={exitMatch}>✕</button>
+    <div class="header-actions">
+      <button
+        class="reader-toggle"
+        class:active={scoreReaderEnabled}
+        on:click={() => updateScoreReader(!scoreReaderEnabled)}
+        title="Score reader în română"
+      >
+        {scoreReaderEnabled ? 'RO Voice ON' : 'RO Voice OFF'}
+      </button>
+      <button class="abort-btn" on:click={exitMatch}>✕</button>
+    </div>
   </header>
 
   {#if apiError}
@@ -128,6 +285,22 @@
     <!-- Checkout hint -->
     {#if hint && !isBusted}
       <div class="hint">🎯 {hintLabel(hint)}</div>
+    {/if}
+    {#if doubleOutActive}
+      <div class="mode-note">{doubleOutNote}</div>
+    {/if}
+    {#if sixtyOneTip}
+      <div class="smart-note">{sixtyOneTip}</div>
+    {/if}
+    {#if scoreReaderEnabled && availableVoices.length > 1}
+      <div class="reader-select-wrap">
+        <label for="reader-voice">Voce</label>
+        <select id="reader-voice" class="reader-select" bind:value={preferredVoiceUri} on:change={(e) => updateVoice(e.currentTarget.value)}>
+          {#each availableVoices as voice}
+            <option value={voice.voiceURI}>{voice.name}</option>
+          {/each}
+        </select>
+      </div>
     {/if}
   </div>
 
@@ -213,9 +386,26 @@
     padding: 0.75rem 1rem; background: #12122a;
     border-bottom: 1px solid #2a2a4a; position: sticky; top: 0; z-index: 10;
   }
+  .header-actions { display: flex; align-items: center; gap: 0.5rem; }
   .player-info { display: flex; align-items: center; gap: 0.5rem; }
   .player-dot { width: 12px; height: 12px; border-radius: 50%; }
   .player-name { font-weight: 700; font-size: 1rem; }
+  .reader-toggle {
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: #98a6d4;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+  }
+  .reader-toggle.active {
+    color: #baf7cf;
+    background: rgba(76,175,80,0.12);
+    border-color: rgba(76,175,80,0.26);
+  }
   .abort-btn { background: none; border: none; color: #666; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; }
   .api-error {
     width: 100%; background: #3a1a1e; border: none; color: #e63946;
@@ -247,6 +437,39 @@
   .hint {
     margin-top: 0.5rem; font-size: 0.85rem; color: #4caf50;
     background: #0a2010; border-radius: 8px; padding: 0.4rem 0.75rem; display: inline-block;
+  }
+  .mode-note {
+    margin-top: 0.6rem;
+    color: #9aa3d7;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    max-width: 26rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .smart-note {
+    margin-top: 0.5rem;
+    color: #ffd166;
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+  .reader-select-wrap {
+    margin-top: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #9aa3d7;
+    font-size: 0.8rem;
+  }
+  .reader-select {
+    min-width: 11rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.06);
+    color: #eef4ff;
+    padding: 0.35rem 0.75rem;
+    font: inherit;
   }
 
   .modifiers {

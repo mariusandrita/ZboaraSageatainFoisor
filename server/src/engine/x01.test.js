@@ -33,6 +33,11 @@ describe('newLeg', () => {
     expect(start501().leg.currentPlayerIdx).toBe(0);
   });
 
+  it('starts with the requested starting player', () => {
+    const s = newLeg({ startingScore: 501, doubleOut: true, players: [1, 2, 3], startingPlayerId: 3 });
+    expect(s.leg.currentPlayerIdx).toBe(2);
+  });
+
   it('supports 301 and 701', () => {
     const s = newLeg({ startingScore: 301, doubleOut: true, players: [1] });
     expect(s.leg.remaining[1]).toBe(301);
@@ -204,7 +209,7 @@ describe('180 detection', () => {
   it('does NOT set 180 for T19 T19 T19 = 171', () => {
     let s = start501([1]);
     s = throwDarts(s, T(19), T(19), T(19));
-    expect(s.celebration).toBeNull();
+    expect(s.celebration).toBe('ton140');
   });
 
   it('180 celebration persists on returned state', () => {
@@ -217,6 +222,18 @@ describe('180 detection', () => {
 // ── high finish / bull finish celebrations ─────────────────────────────────
 
 describe('celebrations', () => {
+  it('ton100 when a normal turn totals between 100 and 139', () => {
+    let s = start501([1]);
+    s = throwDarts(s, T(20), T(20), D(5));
+    expect(s.celebration).toBe('ton100');
+  });
+
+  it('prefers ton140 over ton100 for turns of 140+', () => {
+    let s = start501([1]);
+    s = throwDarts(s, T(20), T(20), D(10));
+    expect(s.celebration).toBe('ton140');
+  });
+
   it('bullFinish when checkout is on bullseye', () => {
     let s = newLeg({ startingScore: 50, doubleOut: true, players: [1] });
     s = submitDart(s, BULL);
@@ -344,6 +361,11 @@ describe('rebuildFromEvents', () => {
   it('returns fresh leg state with empty rows', () => {
     const s = rebuildFromEvents({ startingScore: 501, doubleOut: true, players: [1] }, []);
     expect(s.leg.remaining[1]).toBe(501);
+  });
+
+  it('honors the requested starting player before any darts are thrown', () => {
+    const s = rebuildFromEvents({ startingScore: 501, doubleOut: true, players: [1, 2, 3], startingPlayerId: 2 }, []);
+    expect(s.leg.currentPlayerIdx).toBe(1);
   });
 });
 

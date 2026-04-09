@@ -1,4 +1,4 @@
-# Stitch Prompts — DartsLeague Editia Garaj
+# Stitch Prompts — DartsLeague Editia Foisor
 
 Design system used across all screens:
 - Background: #10102a / #0d0d1a
@@ -16,11 +16,11 @@ Design system used across all screens:
 ### Screen 1: Home
 
 ```
-Dark mobile app home screen for a darts scoring app called "DartsLeague — Editia Garaj".
+Dark mobile app home screen for a darts scoring app called "DartsLeague — Editia Foisor".
 Background #10102a. Font: Space Grotesk + Inter.
 
 Top hero section with a centered dartboard emoji (large, 3.5rem), title "DartsLeague" in white
-Space Grotesk 800, subtitle "Editia Garaj" in muted purple #9990cc. Below the title,
+Space Grotesk 800, subtitle "Editia Foisor" in muted purple #9990cc. Below the title,
 a small pill badge showing connection status: green dot + "Conectat" text when online.
 
 Below the hero, a section titled "Meciuri Active" with a red "LIVE" badge next to it.
@@ -235,7 +235,7 @@ Dark background #0d0d1a. Sports broadcast / tournament board aesthetic.
 Font: Space Grotesk + Inter.
 
 FIXED TOP BAR (#191933, bottom border):
-- Left: 🎯 emoji + "DartsLeague" Space Grotesk 800 white + "Editia Garaj" small muted below
+- Left: 🎯 emoji + "DartsLeague" Space Grotesk 800 white + "Editia Foisor" small muted below
 - Center: current time "20:35" Space Grotesk 900, 2.4rem, white
 - Right: pulsing pink dot + "Așteptăm meciul următor" pill badge
 

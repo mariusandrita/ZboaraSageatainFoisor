@@ -1,19 +1,34 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775552493331,
+  "lastScanned": 1775639225324,
   "projectRoot": "/Users/mariusandrita/Dockers/DartsLeague",
   "techStack": {
-    "languages": [],
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=20.0.0",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
     "frameworks": [],
-    "packageManager": null,
-    "runtime": null
+    "packageManager": "npm",
+    "runtime": "Node.js 20.0.0"
   },
   "build": {
-    "buildCommand": null,
-    "testCommand": null,
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
     "lintCommand": null,
-    "devCommand": null,
-    "scripts": {}
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "concurrently -n server,ctrl,tv -c cyan,green,magenta \"npm run dev -w server\" \"npm run dev -w web/controller\" \"npm run dev -w web/tv\"",
+      "build": "npm run build -w web/controller && npm run build -w web/tv",
+      "start": "npm run start -w server",
+      "test": "npm run test -w server",
+      "install:all": "npm install && npm install -w server && npm install -w web/controller && npm install -w web/tv"
+    }
   },
   "conventions": {
     "namingStyle": null,
@@ -22,8 +37,12 @@
     "fileOrganization": null
   },
   "structure": {
-    "isMonorepo": false,
-    "workspaces": [],
+    "isMonorepo": true,
+    "workspaces": [
+      "server",
+      "web/controller",
+      "web/tv"
+    ],
     "mainDirectories": [
       "docs"
     ],
@@ -38,18 +57,74 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 2,
-      "lastAccessed": 1775552493315,
+      "lastAccessed": 1775639225310,
       "keyFiles": [
         "ARCHITECTURE.md",
         "HARDWARE.md"
+      ]
+    },
+    "ops": {
+      "path": "ops",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775639225310,
+      "keyFiles": []
+    },
+    "server": {
+      "path": "server",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775639225312,
+      "keyFiles": [
+        "package.json"
+      ]
+    },
+    "web": {
+      "path": "web",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775639225312,
+      "keyFiles": []
+    },
+    "ops/scripts": {
+      "path": "ops/scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 2,
+      "lastAccessed": 1775639225312,
+      "keyFiles": [
+        "backup.sh",
+        "install.sh"
+      ]
+    },
+    "server/node_modules": {
+      "path": "server/node_modules",
+      "purpose": "Dependencies",
+      "fileCount": 0,
+      "lastAccessed": 1775639225313,
+      "keyFiles": []
+    },
+    "server/public": {
+      "path": "server/public",
+      "purpose": "Public files",
+      "fileCount": 0,
+      "lastAccessed": 1775639225313,
+      "keyFiles": []
+    },
+    "server/src": {
+      "path": "server/src",
+      "purpose": "Source code",
+      "fileCount": 1,
+      "lastAccessed": 1775639225313,
+      "keyFiles": [
+        "index.js"
       ]
     }
   },
   "hotPaths": [
     {
       "path": "server/src/routes/matches.js",
-      "accessCount": 41,
-      "lastAccessed": 1775629345705,
+      "accessCount": 46,
+      "lastAccessed": 1775658489969,
       "type": "file"
     },
     {
@@ -59,15 +134,27 @@
       "type": "file"
     },
     {
+      "path": "web/controller/src/screens/Players.svelte",
+      "accessCount": 29,
+      "lastAccessed": 1775639808576,
+      "type": "file"
+    },
+    {
       "path": "web/tv/src/screens/Match.svelte",
-      "accessCount": 21,
-      "lastAccessed": 1775629391540,
+      "accessCount": 25,
+      "lastAccessed": 1775658040053,
       "type": "file"
     },
     {
       "path": "web/controller/src/screens/NewMatch.svelte",
+      "accessCount": 21,
+      "lastAccessed": 1775652546273,
+      "type": "file"
+    },
+    {
+      "path": "server/src/stats/aggregate.js",
       "accessCount": 19,
-      "lastAccessed": 1775627719180,
+      "lastAccessed": 1775658094073,
       "type": "file"
     },
     {
@@ -90,26 +177,14 @@
     },
     {
       "path": "web/controller/src/App.svelte",
-      "accessCount": 14,
-      "lastAccessed": 1775626920254,
-      "type": "file"
-    },
-    {
-      "path": "server/src/stats/aggregate.js",
-      "accessCount": 14,
-      "lastAccessed": 1775629356193,
+      "accessCount": 15,
+      "lastAccessed": 1775652229993,
       "type": "file"
     },
     {
       "path": "web/tv/src/App.svelte",
-      "accessCount": 12,
-      "lastAccessed": 1775627226739,
-      "type": "file"
-    },
-    {
-      "path": "web/controller/src/screens/Players.svelte",
-      "accessCount": 12,
-      "lastAccessed": 1775627473193,
+      "accessCount": 14,
+      "lastAccessed": 1775652236939,
       "type": "file"
     },
     {
@@ -120,8 +195,8 @@
     },
     {
       "path": "server/src/routes/players.js",
-      "accessCount": 9,
-      "lastAccessed": 1775627472795,
+      "accessCount": 10,
+      "lastAccessed": 1775648046824,
       "type": "file"
     },
     {
@@ -131,33 +206,33 @@
       "type": "file"
     },
     {
+      "path": "web/shared/ws-client.js",
+      "accessCount": 9,
+      "lastAccessed": 1775658500441,
+      "type": "file"
+    },
+    {
       "path": "web/controller/src/screens/MatchSummary.svelte",
       "accessCount": 8,
       "lastAccessed": 1775567370538,
       "type": "file"
     },
     {
-      "path": "server/src/routes/stats.js",
-      "accessCount": 7,
-      "lastAccessed": 1775626911949,
+      "path": "server/src/realtime/room.js",
+      "accessCount": 8,
+      "lastAccessed": 1775652245917,
       "type": "file"
     },
     {
       "path": "server/src/realtime/events.js",
-      "accessCount": 7,
-      "lastAccessed": 1775626915080,
+      "accessCount": 8,
+      "lastAccessed": 1775652246153,
       "type": "file"
     },
     {
-      "path": "server/src/realtime/room.js",
-      "accessCount": 7,
-      "lastAccessed": 1775626915283,
-      "type": "file"
-    },
-    {
-      "path": "web/shared/ws-client.js",
-      "accessCount": 7,
-      "lastAccessed": 1775626915934,
+      "path": "server/src/routes/stats.js",
+      "accessCount": 8,
+      "lastAccessed": 1775658070316,
       "type": "file"
     },
     {
@@ -176,6 +251,12 @@
       "path": "web/tv/vite.config.js",
       "accessCount": 7,
       "lastAccessed": 1775629627292,
+      "type": "file"
+    },
+    {
+      "path": "server/src/db/schema.sql",
+      "accessCount": 6,
+      "lastAccessed": 1775658028115,
       "type": "file"
     },
     {
@@ -200,12 +281,6 @@
       "path": "web/tv/package.json",
       "accessCount": 4,
       "lastAccessed": 1775626934248,
-      "type": "file"
-    },
-    {
-      "path": "server/src/db/schema.sql",
-      "accessCount": 4,
-      "lastAccessed": 1775626937216,
       "type": "file"
     },
     {

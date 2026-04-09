@@ -3,8 +3,8 @@
  * Called once after the Socket.IO server is created, sets up all socket events.
  */
 import {
-  C_JOIN, C_DART_SUBMIT, C_TURN_UNDO, C_TURN_SKIP,
-  S_MATCH_STATE, matchRoom,
+  C_JOIN, C_DART_SUBMIT, C_TURN_UNDO, C_TURN_SKIP, C_MATCH_SETUP,
+  S_MATCH_STATE, S_MATCH_SETUP, matchRoom,
 } from './events.js';
 
 /**
@@ -13,9 +13,14 @@ import {
  */
 export function setupRealtime(io, fastify) {
   const live = io.of('/live');
+  let pendingMatchSetup = null;
 
   live.on('connection', (socket) => {
     fastify.log.info(`WS connect: ${socket.id}`);
+
+    if (pendingMatchSetup) {
+      socket.emit(S_MATCH_SETUP, pendingMatchSetup);
+    }
 
     // join — client joins a match room
     socket.on(C_JOIN, async ({ matchId, role }) => {
@@ -76,6 +81,11 @@ export function setupRealtime(io, fastify) {
       } catch (err) {
         fastify.log.error(err, 'WS turn:skip error');
       }
+    });
+
+    socket.on(C_MATCH_SETUP, (setup) => {
+      pendingMatchSetup = setup ?? null;
+      live.emit(S_MATCH_SETUP, pendingMatchSetup);
     });
 
     socket.on('disconnect', () => {

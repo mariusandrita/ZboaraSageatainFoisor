@@ -11,6 +11,7 @@ import { setIo } from './realtime/io-instance.js';
 import playerRoutes from './routes/players.js';
 import matchRoutes from './routes/matches.js';
 import statsRoutes from './routes/stats.js';
+import catalogRoutes from './routes/catalog.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 80);
@@ -35,14 +36,16 @@ await fastify.register(fastifyCors, { origin: '*' });
 const publicDir = join(__dirname, '..', 'public');
 await fastify.register(fastifyStatic, { root: publicDir, prefix: '/' });
 
-// Serve controller at root, TV at /tv
+// Serve controller at root, TV at /tv, management at /manage
 fastify.get('/', (_req, reply) => reply.sendFile('controller/index.html'));
 fastify.get('/tv', (_req, reply) => reply.sendFile('tv/index.html'));
+fastify.get('/manage', (_req, reply) => reply.sendFile('manage/index.html'));
 
 // API routes
 fastify.register(playerRoutes, { prefix: '/api/players' });
 fastify.register(matchRoutes,  { prefix: '/api/matches' });
 fastify.register(statsRoutes,  { prefix: '/api/stats' });
+fastify.register(catalogRoutes, { prefix: '/api/catalog' });
 
 // Health check
 fastify.get('/health', async () => ({ status: 'ok', ts: new Date().toISOString() }));

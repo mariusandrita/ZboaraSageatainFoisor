@@ -8,14 +8,17 @@ RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt
 FROM base AS web-builder
 COPY web/controller/package.json ./web/controller/
 COPY web/tv/package.json         ./web/tv/
+COPY web/manage/package.json     ./web/manage/
 RUN cd web/controller && npm install
 RUN cd web/tv         && npm install
+RUN cd web/manage     && npm install
 
 COPY web/ ./web/
 COPY server/package.json ./server/
 
 RUN cd web/controller && npm run build
 RUN cd web/tv         && npm run build
+RUN cd web/manage     && npm run build
 
 # ── Production server ─────────────────────────────────────────────────────
 FROM base AS server

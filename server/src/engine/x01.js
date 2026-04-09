@@ -8,6 +8,7 @@
  *   startingScore: 301|501|701,
  *   doubleOut: boolean,
  *   players: number[],
+ *   startingPlayerId?: number,
  *   leg: {
  *     currentPlayerIdx: number,
  *     remaining: Record<number, number>,
@@ -16,17 +17,21 @@
  *     finished: boolean,
  *     winnerId: number|null,
  *   },
- *   celebration: 'none'|'180'|'highFinish'|'bullFinish'|null,
+ *   celebration: 'none'|'180'|'highFinish'|'bullFinish'|'ton140'|'ton100'|null,
  * }} LegState
  */
 
-/** @param {{ startingScore: number, doubleOut: boolean, players: number[] }} opts */
-export function newLeg({ startingScore, doubleOut, players }) {
+/** @param {{ startingScore: number, doubleOut: boolean, players: number[], startingPlayerId?: number }} opts */
+export function newLeg({ startingScore, doubleOut, players, startingPlayerId = players?.[0] }) {
   if (!Number.isInteger(startingScore) || startingScore < 2) {
     throw new Error(`Invalid starting score: ${startingScore}`);
   }
   if (!players || players.length < 1) {
     throw new Error('At least one player required');
+  }
+  const startingPlayerIdx = players.indexOf(startingPlayerId);
+  if (startingPlayerIdx === -1) {
+    throw new Error(`Starting player ${startingPlayerId} is not in this leg`);
   }
 
   const remaining = {};
@@ -36,8 +41,9 @@ export function newLeg({ startingScore, doubleOut, players }) {
     startingScore,
     doubleOut,
     players: [...players],
+    startingPlayerId,
     leg: {
-      currentPlayerIdx: 0,
+      currentPlayerIdx: startingPlayerIdx,
       remaining,
       turn: [],
       turnStartRemaining: startingScore,
@@ -113,6 +119,7 @@ export function submitDart(state, { segment, multiplier }) {
     if (turnTotal === 180) s.celebration = '180';
     else if (turnTotal === 0) s.celebration = 'threeMisses';
     else if (turnTotal >= 140) s.celebration = 'ton140';
+    else if (turnTotal >= 100) s.celebration = 'ton100';
     else if (s.leg.turn.some(d => d.multiplier === 3 && d.segment <= 5)) s.celebration = 'lowTriple';
     return _endTurn(s);
   }
@@ -166,7 +173,7 @@ export function undoDart(state) {
 
 /**
  * Rebuild full LegState by replaying an ordered list of dart records from the DB.
- * @param {{ startingScore: number, doubleOut: boolean, players: number[] }} opts
+ * @param {{ startingScore: number, doubleOut: boolean, players: number[], startingPlayerId?: number }} opts
  * @param {Array<{ player_id: number, segment: number, multiplier: number, score_value: number, turn_number: number, dart_in_turn: number, busted: number }>} dartRows
  * @returns {LegState}
  */

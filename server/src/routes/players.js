@@ -22,20 +22,19 @@ export default async function playerRoutes(fastify) {
         type: 'object',
         required: ['name'],
         properties: {
-          name:     { type: 'string', minLength: 1, maxLength: 32 },
-          nickname: { type: 'string', maxLength: 20 },
-          color:    { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
-          photo:    { type: 'string' },
+          name:  { type: 'string', minLength: 1, maxLength: 32 },
+          color: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+          photo: { type: 'string' },
         },
       },
     },
   }, async (req, reply) => {
-    const { name, nickname = null, color = '#e63946', photo = null } = req.body;
+    const { name, color = '#e63946', photo = null } = req.body;
 
     try {
       const info = db
         .prepare('INSERT INTO players (name, nickname, color, photo) VALUES (?, ?, ?, ?)')
-        .run(name, nickname, color, photo);
+        .run(name, null, color, photo);
 
       const player = db
         .prepare('SELECT * FROM players WHERE id = ?')
@@ -57,10 +56,9 @@ export default async function playerRoutes(fastify) {
       body: {
         type: 'object',
         properties: {
-          name:     { type: 'string', minLength: 1, maxLength: 32 },
-          nickname: { type: 'string', maxLength: 20 },
-          color:    { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
-          photo:    { type: 'string' },
+          name:  { type: 'string', minLength: 1, maxLength: 32 },
+          color: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+          photo: { type: 'string' },
         },
       },
     },
@@ -69,15 +67,14 @@ export default async function playerRoutes(fastify) {
     const player = db.prepare('SELECT * FROM players WHERE id = ? AND archived_at IS NULL').get(id);
     if (!player) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Player not found' } });
 
-    const { name, nickname, color, photo } = req.body;
+    const { name, color, photo } = req.body;
     const updates = [];
     const values = [];
 
-    if (name !== undefined)     { updates.push('name = ?');     values.push(name); }
-    if (nickname !== undefined) { updates.push('nickname = ?'); values.push(nickname); }
-    if (color !== undefined)    { updates.push('color = ?');    values.push(color); }
-    if (photo !== undefined)    { updates.push('photo = ?');    values.push(photo); }
-    if (updates.length === 0)   return player;
+    if (name !== undefined)  { updates.push('name = ?');  values.push(name); }
+    if (color !== undefined) { updates.push('color = ?'); values.push(color); }
+    if (photo !== undefined) { updates.push('photo = ?'); values.push(photo); }
+    if (updates.length === 0) return player;
 
     values.push(id);
     try {
@@ -106,12 +103,21 @@ export default async function playerRoutes(fastify) {
 
   // GET /api/players/:id/stats
   fastify.get('/:id/stats', {
-    schema: { params: { type: 'object', properties: { id: { type: 'integer' } } } },
+    schema: {
+      params: { type: 'object', properties: { id: { type: 'integer' } } },
+      querystring: {
+        type: 'object',
+        properties: {
+          include_live: { type: 'integer', enum: [0, 1] },
+        },
+      },
+    },
   }, async (req, reply) => {
     const { id } = req.params;
+    const includeLive = req.query?.include_live === 1;
     const player = db.prepare('SELECT * FROM players WHERE id = ?').get(id);
     if (!player) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Player not found' } });
 
-    return playerStats(id);
+    return playerStats(id, { includeLive });
   });
 }

@@ -3,9 +3,10 @@
 
   export let kind        = '180';
   export let playerName  = '';
+  export let playerPhoto = null;
   export let value       = 0;
 
-  const FUNNY = new Set(['lunetist','breakfast','zugrav','hamster','matematician','centrul']);
+  const FUNNY = new Set(['lunetist','breakfast','zugrav','hamster','matematician','centrul','shanghai','blackHat','bailOut','bucket','madhouseEscape']);
   $: isFunny = FUNNY.has(kind);
 
   $: cfg = buildCfg(kind, value);
@@ -14,19 +15,29 @@
     const map = {
       // ── Standard ──────────────────────────────────────────────────────────
       '180':          { label: '180',        sub: 'MAXIMUM!',                          color: '#ffd700', bg: 'rgba(255,215,0,0.13)'   },
+      'legWon':       { label: 'LEG',        sub: 'MANȘĂ CÂȘTIGATĂ!',                  desc: `Închidere curată. Total manșe câștigate: ${v}.`, color: '#ffd166', bg: 'rgba(255,209,102,0.14)' },
       'highFinish':   { label: String(v),    sub: 'FINALIZARE ÎNALTĂ!',                color: '#00e5ff', bg: 'rgba(0,229,255,0.11)'   },
       'bullFinish':   { label: '🎯',         sub: 'FINALIZARE BULL!',                  color: '#4caf50', bg: 'rgba(76,175,80,0.11)'   },
       'bust':         { label: '💥',         sub: 'PREA MULT!',                        color: '#e63946', bg: 'rgba(230,57,70,0.15)'   },
       'ton140':       { label: String(v),    sub: 'MAGNIFIC!',                         color: '#f4a261', bg: 'rgba(244,162,97,0.12)'  },
+      'ton100':       { label: String(v),    sub: 'CLUB 100+!',                        color: '#7ee7b7', bg: 'rgba(126,231,183,0.12)' },
       'threeMisses':  { label: '🙈',         sub: 'TREI RATATE!',                      color: '#9b5de5', bg: 'rgba(155,93,229,0.12)'  },
       'lowTriple':    { label: '🎯',         sub: 'CEL PUȚIN L-AI NIMERIT!',           color: '#fee440', bg: 'rgba(254,228,64,0.10)'  },
+      'bigDouble':    { label: 'D+',        sub: 'DUBLĂ GREA!',                        color: '#5bd5fc', bg: 'rgba(91,213,252,0.13)'  },
+      'bigTriple':    { label: 'T+',        sub: 'TRIPLĂ GREA!',                       color: '#ffd166', bg: 'rgba(255,209,102,0.13)' },
+      'overAvg':      { label: String(v),   sub: 'PESTE MEDIA TA!',                    color: '#7ee7b7', bg: 'rgba(126,231,183,0.14)' },
       // ── Funny Awards ──────────────────────────────────────────────────────
-      'lunetist':     { label: '3',          sub: 'LUNETISTUL CONFUZ! 🔭',             color: '#c77dff', bg: 'rgba(199,125,255,0.13)' },
-      'breakfast':    { label: '🍳',         sub: 'MIC DEJUN ENGLEZESC!',              color: '#f4a261', bg: 'rgba(244,162,97,0.13)'  },
-      'zugrav':       { label: '🪣',         sub: 'SE CAUTĂ MESERIAȘ PENTRU GLET!',    color: '#5bd5fc', bg: 'rgba(91,213,252,0.11)'  },
-      'hamster':      { label: String(v),    sub: 'EFORT MAXIM, REZULTAT MINIM! 🐹',   color: '#fee440', bg: 'rgba(254,228,64,0.11)'  },
-      'matematician': { label: '?',          sub: 'ERROR 404 — CALCUL GREȘIT! 🤯',     color: '#e63946', bg: 'rgba(230,57,70,0.18)'   },
-      'centrul':      { label: 'BULL',       sub: 'DAR NU ERA MOMENTUL... 🎉',          color: '#4caf50', bg: 'rgba(76,175,80,0.12)'   },
+      'shanghai':     { label: 'SH',         sub: 'SHANGHAI!',                         desc: 'Single, dublă și triplă pe același număr. Vizită de mare clasă.', color: '#ffb703', bg: 'rgba(255,183,3,0.14)' },
+      'blackHat':     { label: '🎩',         sub: 'BLACK HAT!',                        desc: 'Trei bull-uri într-o singură tură. Asta e deja legendă de foișor.', color: '#fdf0d5', bg: 'rgba(253,240,213,0.16)' },
+      'bailOut':      { label: 'SAVE',       sub: 'BAIL OUT!',                         desc: 'Ai salvat o tură slabă cu ultimul dart. Foarte amator, foarte frumos.', color: '#8ecae6', bg: 'rgba(142,202,230,0.14)' },
+      'bucket':       { label: '🪣',         sub: 'BUCKET OF NAILS!',                  desc: 'Darturile au mers în toate direcțiile, dar cumva tot a ieșit spectacol.', color: '#b08968', bg: 'rgba(176,137,104,0.16)' },
+      'madhouseEscape': { label: 'D1',       sub: 'MADHOUSE ESCAPE!',                  desc: 'Ai închis pe double 1. Se pune și tremurul din mână.', color: '#ffafcc', bg: 'rgba(255,175,204,0.15)' },
+      'lunetist':     { label: '3',          sub: 'LUNETISTUL CONFUZ! 🔭',             desc: 'Ai nimerit T1: precizie maximă pe ținta cea mai greșită.', color: '#c77dff', bg: 'rgba(199,125,255,0.13)' },
+      'breakfast':    { label: '🍳',         sub: 'MIC DEJUN ENGLEZESC!',              desc: 'Ai dat 1, 5 și 20 simplu în aceeași tură: clasicul English Breakfast.', color: '#f4a261', bg: 'rgba(244,162,97,0.13)'  },
+      'zugrav':       { label: '🪣',         sub: 'SE CAUTĂ MESERIAȘ PENTRU GLET!',    desc: 'Săgeata a ratat tabla complet. Direct în perete.', color: '#5bd5fc', bg: 'rgba(91,213,252,0.11)'  },
+      'hamster':      { label: String(v),    sub: 'EFORT MAXIM, REZULTAT MINIM! 🐹',   desc: 'Toate cele 3 săgeți au intrat pe tablă, dar totalul turei a rămas sub 20.', color: '#fee440', bg: 'rgba(254,228,64,0.11)'  },
+      'matematician': { label: '?',          sub: 'ERROR 404 — CALCUL GREȘIT! 🤯',     desc: 'Ai făcut bust când scorul rămas era foarte mic. Matematica n-a ieșit.', color: '#e63946', bg: 'rgba(230,57,70,0.18)'   },
+      'centrul':      { label: 'BULL',       sub: 'DAR NU ERA MOMENTUL... 🎉',          desc: 'Bullseye frumos, dar nu era lovitura de închidere.', color: '#4caf50', bg: 'rgba(76,175,80,0.12)'   },
     };
     return map[k] ?? map['180'];
   }
@@ -37,7 +48,7 @@
 <div
   class="overlay"
   class:funny={isFunny}
-  style="background: radial-gradient(circle at center, {cfg.bg} 0%, rgba(0,0,0,0.9) 70%)"
+  style="background: radial-gradient(circle at center, {cfg.bg} 0%, rgba(0,0,0,0.96) 55%, rgba(0,0,0,0.985) 100%)"
   in:fade={{ duration: 250 }}
   out:fade={{ duration: 300 }}
 >
@@ -67,13 +78,22 @@
     class:anim-spin={kind === 'hamster'}
     class:anim-glitch={kind === 'matematician'}
     class:anim-pop={kind === 'breakfast' || kind === 'centrul'}
+    class:anim-crown={kind === 'legWon'}
     in:fly={{ y: 40, duration: 350, delay: 80 }}
     out:fly={{ y: -20, duration: 250 }}
   >
+    {#if playerPhoto}
+      <div class="player-photo-wrap">
+        <img class="player-photo" src={playerPhoto} alt={playerName || 'player'} />
+      </div>
+    {/if}
     <div class="value" style="color:{cfg.color}; text-shadow: 0 0 60px {cfg.color}, 0 0 120px {cfg.color}40">
       {cfg.label}
     </div>
     <div class="sub">{cfg.sub}</div>
+    {#if cfg.desc}
+      <div class="desc">{cfg.desc}</div>
+    {/if}
     {#if playerName}<div class="player">{playerName}</div>{/if}
   </div>
 
@@ -86,9 +106,19 @@
     position: fixed; inset: 0; z-index: 100;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
+    backdrop-filter: blur(10px);
   }
 
-  .content { text-align: center; position: relative; z-index: 2; }
+  .content {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    padding: 2.4rem 3rem;
+    border-radius: 36px;
+    background: rgba(4, 8, 15, 0.54);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+  }
 
   .value {
     font-family: 'Space Grotesk', system-ui, sans-serif;
@@ -114,6 +144,34 @@
     font-size: clamp(1rem, 2.5vw, 1.8rem);
     color: #aaa;
     margin-top: 1rem;
+  }
+
+  .player-photo-wrap {
+    width: 128px;
+    height: 128px;
+    margin: 0 auto 1.15rem;
+    padding: 8px;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
+  }
+
+  .player-photo {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    border-radius: 22px;
+  }
+
+  .desc {
+    max-width: min(72vw, 900px);
+    margin: 1rem auto 0;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: clamp(0.95rem, 1.8vw, 1.25rem);
+    line-height: 1.45;
+    font-weight: 600;
   }
 
   /* ── Funny: wobble (lunetist — confused sniper) ── */
@@ -208,6 +266,16 @@
   .anim-pop .value {
     display: inline-block;
     animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  .anim-crown .value {
+    display: inline-block;
+    animation: crown-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes crown-rise {
+    0% { transform: translateY(20px) scale(0.88); opacity: 0; }
+    55% { transform: translateY(-8px) scale(1.06); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
   }
   @keyframes pop {
     from { transform: scale(0.4); opacity: 0; }
