@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
+    "import:prodarts": "node src/import/prodarts-cli.js",
+    "awards:rebuild": "node src/scripts/rebuild-awards.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },

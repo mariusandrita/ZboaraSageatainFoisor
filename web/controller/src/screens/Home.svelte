@@ -41,7 +41,7 @@
   <!-- Hero -->
   <div class="hero">
     <div class="hero-icon">🎯</div>
-    <h1>DartsLeague</h1>
+    <h1>ZboaraSageata</h1>
     <p class="tagline">Editia Foisor</p>
     <div class="conn-pill" class:online={$connected}>
       <span class="conn-dot"></span>
@@ -106,14 +106,17 @@
 
   .home {
     display: flex; flex-direction: column;
-    min-height: 100vh; background: #10102a; color: #e2dfff;
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
+    background: #10102a; color: #e2dfff;
     font-family: 'Inter', system-ui, sans-serif;
   }
 
   /* Hero */
   .hero {
     display: flex; flex-direction: column; align-items: center;
-    padding: 3rem 1.5rem 2rem;
+    padding: 2rem 1.25rem 1.25rem;
     background: linear-gradient(160deg, #2a0a12 0%, #10102a 60%);
     text-align: center; gap: 0.4rem;
   }
@@ -137,7 +140,13 @@
   }
 
   /* Section */
-  .section { padding: 1.25rem 1.25rem 0; flex: 1; }
+  .section {
+    padding: 1rem 1.25rem 0;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 
   .section-header {
     display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.75rem;
@@ -198,7 +207,9 @@
   /* Actions */
   .actions {
     display: flex; flex-direction: column; gap: 0.75rem;
-    padding: 1.5rem 1.25rem 2rem;
+    padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    background:
+      linear-gradient(180deg, rgba(16,16,42,0) 0%, rgba(16,16,42,0.82) 18%, #10102a 44%);
   }
 
   .btn {
@@ -211,4 +222,26 @@
   .btn-icon { font-size: 1.2rem; line-height: 1; }
   .btn.primary   { background: #e63946; color: #fff; }
   .btn.secondary { background: rgba(255,255,255,0.05); color: #9990cc; border: 1px solid rgba(255,255,255,0.1); }
+
+  @media (max-height: 760px) {
+    .hero {
+      padding-top: 1.35rem;
+      padding-bottom: 1rem;
+    }
+
+    .hero-icon { font-size: 2.9rem; }
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    .actions {
+      gap: 0.6rem;
+      padding-top: 0.85rem;
+    }
+
+    .btn {
+      padding: 0.88rem;
+    }
+  }
 </style>

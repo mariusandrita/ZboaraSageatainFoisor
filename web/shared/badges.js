@@ -1,9 +1,9 @@
 export const BADGE_LABELS = {
   breakfast: 'English Breakfast',
   shanghai: 'Shanghai',
-  blackHat: 'Black Hat',
-  bailOut: 'Bail Out',
-  bucket: 'Bucket of Nails',
+  blackHat: 'Pălăria Neagră',
+  bailOut: 'Salvare',
+  bucket: 'Sac cu Cuie',
   madhouseEscape: 'Madhouse Escape',
   lunetist: 'Lunetist',
   centrul: 'Centrul',
@@ -16,12 +16,19 @@ export const BADGE_LABELS = {
   ton100: '100+',
   bigDouble: 'Double 15+',
   bigTriple: 'Triple 15+',
-  overAvg: 'Over Average',
-  beatGeneral: 'Beat General Avg',
-  lowTriple: 'Low Triple',
-  threeMisses: 'Three Misses',
+  overAvg: 'Peste Medie',
+  beatGeneral: 'Peste Media Generală',
+  lowTriple: 'Triplă Mică',
+  threeMisses: 'Trei Ratate',
   bust: 'Bust',
   '180': '180',
+  nineDarter: 'Nine-Darter',
+  motown: 'Motown',
+  champagneShower: 'Champagne Shower',
+  circleIt: 'Circle It',
+  route66: 'Route 66',
+  allTheFives: 'All the Fives',
+  twoFatLadies: 'Two Fat Ladies',
 };
 
 const BADGE_COLORS = {
@@ -48,7 +55,15 @@ const BADGE_COLORS = {
   threeMisses: ['#475569', '#0f172a'],
   bust: ['#7f1d1d', '#ef4444'],
   '180': ['#991b1b', '#f59e0b'],
+  nineDarter: ['#0f172a', '#fbbf24'],
+  motown: ['#1e1b4b', '#818cf8'],
+  champagneShower: ['#1c1917', '#fcd34d'],
+  circleIt: ['#134e4a', '#2dd4bf'],
+  route66: ['#431407', '#f97316'],
+  allTheFives: ['#14532d', '#4ade80'],
+  twoFatLadies: ['#4a1d96', '#c084fc'],
 };
+
 
 export function awardLabel(kind) {
   return BADGE_LABELS[kind] ?? kind;

@@ -12,6 +12,7 @@ import playerRoutes from './routes/players.js';
 import matchRoutes from './routes/matches.js';
 import statsRoutes from './routes/stats.js';
 import catalogRoutes from './routes/catalog.js';
+import importRoutes from './routes/imports.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 80);
@@ -46,6 +47,7 @@ fastify.register(playerRoutes, { prefix: '/api/players' });
 fastify.register(matchRoutes,  { prefix: '/api/matches' });
 fastify.register(statsRoutes,  { prefix: '/api/stats' });
 fastify.register(catalogRoutes, { prefix: '/api/catalog' });
+fastify.register(importRoutes, { prefix: '/api/imports' });
 
 // Health check
 fastify.get('/health', async () => ({ status: 'ok', ts: new Date().toISOString() }));

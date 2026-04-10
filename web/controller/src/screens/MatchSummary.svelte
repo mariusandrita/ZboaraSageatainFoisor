@@ -146,7 +146,7 @@
           </div>
 
           {#if player.id === (recap?.winner_id ?? $match?.winner_id) && !isAborted}
-            <div class="winner-pill">WIN</div>
+            <div class="winner-pill">VICTORIE</div>
           {/if}
         </div>
 

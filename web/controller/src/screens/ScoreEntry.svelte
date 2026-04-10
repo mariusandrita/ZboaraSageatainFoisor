@@ -53,7 +53,7 @@
       });
       if (!res.ok) {
         const d = await res.json();
-        apiError = d.error?.message ?? 'Error submitting dart';
+        apiError = d.error?.message ?? 'Eroare la trimiterea aruncării';
       } else {
         const nextTurnState = await res.json();
         announceScore(segment, $multiplier, nextTurnState);
@@ -389,7 +389,7 @@
   .header-actions { display: flex; align-items: center; gap: 0.5rem; }
   .player-info { display: flex; align-items: center; gap: 0.5rem; }
   .player-dot { width: 12px; height: 12px; border-radius: 50%; }
-  .player-name { font-weight: 700; font-size: 1rem; }
+  .player-name { font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw; }
   .reader-toggle {
     border: 1px solid rgba(255,255,255,0.08);
     background: rgba(255,255,255,0.04);
@@ -458,12 +458,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     color: #9aa3d7;
     font-size: 0.8rem;
+    padding: 0 0.5rem;
   }
   .reader-select {
-    min-width: 11rem;
+    flex: 1;
+    max-width: 11rem;
     border-radius: 999px;
     border: 1px solid rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.06);

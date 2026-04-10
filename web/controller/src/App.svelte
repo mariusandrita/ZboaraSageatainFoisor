@@ -128,5 +128,13 @@
 </main>
 
 <style>
-  main { min-height: 100vh; background: #1a1a2e; color: #fff; }
+  main {
+    min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
+    background: #1a1a2e;
+    color: #fff;
+    width: 100%;
+    overflow-x: hidden;
+  }
 </style>

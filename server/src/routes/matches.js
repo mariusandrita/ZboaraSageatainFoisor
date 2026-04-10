@@ -20,8 +20,17 @@ function detectFunnyCelebration(segment, multiplier, scoreValue, isBust, dartInT
   // Matematician: bust when the remaining score was tiny (≤ 20) — bad maths
   if (isBust && turnStartRemaining <= 20) return 'matematician';
 
+  // Champagne Shower: bust when close to finishing (21–50 remaining) — so near, so far
+  if (isBust && turnStartRemaining > 20 && turnStartRemaining <= 50) return 'champagneShower';
+
   // Madhouse Escape: winning on double 1.
   if (!isBust && isFinished && segment === 1 && multiplier === 2) return 'madhouseEscape';
+
+  // Motown: checkout on exactly 44 — the Four Tops (S4 + D20)
+  if (!isBust && isFinished) {
+    const checkoutTotal = [...prevTurnDarts, { score_value: scoreValue }].reduce((s, d) => s + d.score_value, 0);
+    if (checkoutTotal === 44) return 'motown';
+  }
 
   // Lunetist: Triple 1 — surgical precision on the worst target (supersedes lowTriple)
   if (segment === 1 && multiplier === 3 && !isBust) return 'lunetist';
@@ -64,10 +73,18 @@ function detectFunnyCelebration(segment, multiplier, scoreValue, isBust, dartInT
     const thirdDart = fullTurn[2];
     if (thirdDart && firstTwoTotal <= 20 && thirdDart.score_value >= 40) return 'bailOut';
 
+    // Score callout specials — named turns from pub darts culture
+    if (total === 88) return 'twoFatLadies';
+    if (total === 66) return 'route66';
+    if (total === 55) return 'allTheFives';
+
     // Bucket/Buckshot: all darts hit different bands and are spread all over the board.
     const distinctSegments = new Set(fullTurn.map((d) => d.segment)).size;
     const distinctMultipliers = new Set(mults).size;
     if (distinctSegments === 3 && distinctMultipliers >= 2 && total >= 21 && total <= 60) return 'bucket';
+
+    // Circle It: all darts on the board but total is embarrassingly tiny (under 10)
+    if (total > 0 && total < 10 && fullTurn.every((d) => d.segment > 0)) return 'circleIt';
 
     // Hamster: all darts hit the board but total is still embarrassingly small
     if (total > 0 && total < 20 && fullTurn.every((d) => d.segment > 0)) return 'hamster';
@@ -376,7 +393,7 @@ export default async function matchRoutes(fastify) {
 
     // Validate players exist
     for (const pid of player_ids) {
-      const p = db.prepare('SELECT id FROM players WHERE id = ? AND archived_at IS NULL').get(pid);
+      const p = db.prepare('SELECT id FROM players WHERE id = ? AND archived_at IS NULL AND is_playable = 1').get(pid);
       if (!p) return reply.code(404).send({ error: { code: 'PLAYER_NOT_FOUND', message: `Player ${pid} not found` } });
     }
 
@@ -632,7 +649,11 @@ export default async function matchRoutes(fastify) {
       segment, multiplier, scoreValue, isBust, dartInTurn,
       prevTurnDarts, turnStartRemaining, newState.leg.finished, playerTurnAverage
     );
-    const celebKind = funnyCelebration ?? newState.celebration;
+    let celebKind = funnyCelebration ?? newState.celebration;
+
+    // Nine-Darter: 501 finished in exactly 9 darts — overrides everything else
+    if (newState.leg.finished && dartRows.length + 1 === 9) celebKind = 'nineDarter';
+
     if (celebKind && celebKind !== 'overAvg') {
       db.prepare(`
         INSERT OR IGNORE INTO awards (match_id, leg_id, dart_id, player_id, kind, value)

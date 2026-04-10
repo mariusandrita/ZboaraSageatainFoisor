@@ -8,6 +8,7 @@
   export let kind;
   export let count = null;
   export let compact = false;
+  export let iconOnly = false;
 
   let currentKind = null;
   let attempt = 0;
@@ -28,15 +29,18 @@
 
 <span class="badge-token" class:compact title={label}>
   <span class="badge-art-shell">
-    <img class="badge-art" src={src} alt={label} loading="lazy" on:error={handleError} />
+    <img class="badge-art" src={src} alt={label} loading="lazy" on:error={handleError}
+      />
   </span>
 
+  {#if !iconOnly}
   <span class="badge-copy">
     <span class="badge-label">{label}</span>
     {#if count != null}
       <span class="badge-count">×{count}</span>
     {/if}
   </span>
+  {/if}
 </span>
 
 <style>
@@ -44,28 +48,29 @@
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
-    min-height: 2.7rem;
-    padding: 0.35rem 0.65rem 0.35rem 0.4rem;
-    border-radius: 999px;
-    background: rgba(8, 15, 30, 0.58);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-    backdrop-filter: blur(14px);
+    min-height: 2.4rem;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .badge-token.compact {
     gap: 0.45rem;
-    min-height: 2.3rem;
-    padding: 0.24rem 0.55rem 0.24rem 0.28rem;
+    min-height: 2rem;
+    padding: 0;
   }
 
   .badge-art-shell {
     width: 2rem;
     height: 2rem;
-    border-radius: 999px;
-    overflow: hidden;
     flex: 0 0 auto;
-    background: rgba(255, 255, 255, 0.08);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .badge-token.compact .badge-art-shell {
@@ -77,7 +82,8 @@
     width: 100%;
     height: 100%;
     display: block;
-    object-fit: cover;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.22));
   }
 
   .badge-copy {

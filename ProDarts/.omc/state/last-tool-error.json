@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"adb -e shell am start -n duchow.julien.prodarts/.MainActivity 2>&1\\nsleep 5\\n# Check if app started\\nadb -e shell pidof duchow.julien.prodarts 2>&1\",\"description\":\"Launch ProDarts on emula...",
+  "error": "Exit code 1\nStarting: Intent { cmp=duchow.julien.prodarts/.MainActivity }\n[rerun: b86]",
+  "timestamp": "2026-04-09T09:15:00.531Z",
+  "retry_count": 2
+}

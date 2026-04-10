@@ -3,7 +3,7 @@
  * DELETE /players/:id, GET /players/:id/stats
  */
 import { getDb } from '../db/connection.js';
-import { playerStats } from '../stats/aggregate.js';
+import { playerDetail, playerStats } from '../stats/aggregate.js';
 
 export default async function playerRoutes(fastify) {
   const db = getDb();
@@ -11,7 +11,7 @@ export default async function playerRoutes(fastify) {
   // GET /api/players
   fastify.get('/', async () => {
     return db
-      .prepare('SELECT * FROM players WHERE archived_at IS NULL ORDER BY name')
+      .prepare('SELECT * FROM players WHERE archived_at IS NULL AND is_playable = 1 ORDER BY name')
       .all();
   });
 
@@ -119,5 +119,18 @@ export default async function playerRoutes(fastify) {
     if (!player) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Player not found' } });
 
     return playerStats(id, { includeLive });
+  });
+
+  fastify.get('/:id/detail', {
+    schema: {
+      params: { type: 'object', properties: { id: { type: 'integer' } } },
+    },
+  }, async (req, reply) => {
+    const { id } = req.params;
+    const detail = playerDetail(id);
+    if (!detail) {
+      return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Player not found' } });
+    }
+    return detail;
   });
 }
