@@ -13,7 +13,7 @@
   let spotlightIdx = 0;
   let liveCount = 0;
   let unfinishedMatches = [];
-  let clockTimer, spotlightTimer, refreshTimer;
+  let clockTimer, spotlightTimer, refreshTimer, setupPreviewTimer;
 
   // Auto-scroll
   let lbTrackEl;
@@ -39,7 +39,9 @@
   let celebTimer = null;
   let matchRecap = null;
   let matchSetup = null;
+  let allPlayersById = new Map();
   let liveMatchStats = [];
+  let playerAwards = {};
   let generalAvgSnapshot = {};
   let recapPending = false;
   let statsRefreshToken = 0;
@@ -129,10 +131,15 @@
 
   onMount(async () => {
     await loadData();
+    await loadSetupPreview();
+    fetch('/api/players').then(r => r.json()).then(list => {
+      allPlayersById = new Map(list.map(p => [p.id, p]));
+    }).catch(() => {});
     updateClock();
     clockTimer    = setInterval(updateClock, 1000);
     spotlightTimer = setInterval(nextSpotlight, 13000);
     refreshTimer  = setInterval(loadData, 60_000);
+    setupPreviewTimer = setInterval(loadSetupPreview, 1500);
     startLbScroll();
     startRecCarousel();
     initWebsocket();
@@ -142,6 +149,7 @@
     clearInterval(clockTimer);
     clearInterval(spotlightTimer);
     clearInterval(refreshTimer);
+    clearInterval(setupPreviewTimer);
     clearTimeout(celebTimer);
     stopLbScroll();
     stopRecCarousel();
@@ -153,6 +161,18 @@
       const res = await fetch('/api/stats/lobby');
       if (res.ok) data = await res.json();
     } catch (e) {}
+  }
+
+  async function loadSetupPreview() {
+    if (matchState || matchRecap || recapPending) return;
+    try {
+      const res = await fetch('/api/matches/setup-preview');
+      if (res.ok) {
+        matchSetup = await res.json();
+      }
+    } catch (e) {
+      console.error('Failed to load setup preview', e);
+    }
   }
 
 
@@ -312,7 +332,10 @@
   }
 
   function recentMatchScore(match) {
-    const scores = (match?.players ?? []).map((player) => player.legs_won);
+    const scores = (match?.players ?? [])
+      .map((player) => player.legs_won)
+      .sort((a, b) => b - a)
+      .slice(0, 2);
     return scores.length ? scores.join(' - ') : '—';
   }
 
@@ -405,7 +428,7 @@
   function showCelebration(c) {
     celebration = c;
     clearTimeout(celebTimer);
-    celebTimer = setTimeout(() => { celebration = null; }, 3500);
+    celebTimer = setTimeout(() => { celebration = null; }, 6000);
   }
 
   function clearCelebration() {
@@ -418,8 +441,9 @@
     recapPending = false;
   }
 
-  function applyPlayerAwards(playerAwards = null) {
-    if (!playerAwards) return;
+  function applyPlayerAwards(awardsByPlayer = null) {
+    if (!awardsByPlayer) return;
+    playerAwards = awardsByPlayer;
     const nextStats = [...liveMatchStats];
     const indexByPlayerId = new Map(nextStats.map((entry, index) => [String(entry.player_id), index]));
     const knownPlayerIds = new Set([
@@ -428,14 +452,14 @@
     ]);
     for (const playerId of knownPlayerIds) {
       const index = indexByPlayerId.get(playerId);
-      const normalizedAwards = Array.isArray(playerAwards[playerId]) ? playerAwards[playerId] : [];
+      const normalizedAwards = Array.isArray(awardsByPlayer[playerId]) ? awardsByPlayer[playerId] : [];
       if (index == null) {
         nextStats.push({ player_id: Number(playerId), avg_3dart: 0, s180: 0, legs_won: 0, awards: normalizedAwards });
         continue;
       }
       nextStats[index] = { ...nextStats[index], awards: normalizedAwards };
     }
-    for (const [playerId, awards] of Object.entries(playerAwards)) {
+    for (const [playerId, awards] of Object.entries(awardsByPlayer)) {
       const index = indexByPlayerId.get(String(playerId));
       const normalizedAwards = Array.isArray(awards) ? awards : [];
       if (index == null && !knownPlayerIds.has(String(playerId))) {
@@ -449,6 +473,7 @@
     matchState = null;
     turnState = null;
     liveMatchStats = [];
+    playerAwards = {};
     generalAvgSnapshot = {};
     statsRefreshToken += 1;
   }
@@ -506,6 +531,9 @@
         const stats = await matchStatsRes.json();
         if (token === statsRefreshToken && matchState?.id === matchId) {
           liveMatchStats = stats;
+          playerAwards = Object.fromEntries(
+            (stats ?? []).map((entry) => [entry.player_id, entry.awards ?? []])
+          );
         }
       }
     } catch (e) { console.error('match stats refresh failed', e); }
@@ -557,10 +585,11 @@
       if (matchState?.id) refreshStats(matchState.id);
     });
 
-    ws.onLegWon(({ matchState: ms }) => {
+    ws.onLegWon(({ matchState: ms, playerAwards }) => {
       matchState = ms;
       turnState = ms.turnState ?? null;
       applyGeneralAvgSnapshot(ms.players ?? []);
+      applyPlayerAwards(playerAwards);
       refreshStats(ms.id);
       if (ms.status === 'live') {
         const winner = ms.players?.find((p) => p.id === ms.winner_id || p.id === ms.legs?.find((leg) => leg.winner_id)?.winner_id)
@@ -597,19 +626,21 @@
   $: tickerParts = buildTickerParts(data);
 
   // ── Match setup overlay ───────────────────────────────────
-  $: setupPlayers = buildSetupPlayers(matchSetup, data?.playerSpotlights ?? []);
+  $: setupPlayers = buildSetupPlayers(matchSetup, data?.playerSpotlights ?? [], allPlayersById);
   $: selectedPlayerIds = new Set(matchSetup?.selectedIds ?? []);
   $: selectedPlayerCount = matchSetup?.selectedIds?.length ?? 0;
   $: setupLegLabel = setupLegsLabel(matchSetup?.legsToWin);
 
-  function buildSetupPlayers(setup, statsPlayers) {
+  function buildSetupPlayers(setup, statsPlayers, playersById = allPlayersById) {
     if (!setup?.availablePlayers?.length) return [];
     const statsById = new Map(statsPlayers.map((p) => [p.id, p]));
     return setup.availablePlayers.map((player) => {
       const stats = statsById.get(player.id) ?? {};
+      const fullPlayer = allPlayersById.get(player.id) ?? {};
       const selectionIdx = setup.selectedIds?.indexOf(player.id) ?? -1;
       return {
         ...player,
+        photo: fullPlayer.photo ?? player.photo ?? null,
         avg_3dart: stats.avg_3dart ?? 0,
         high_finish: stats.high_checkout ?? 0,
         s100plus: stats.s100plus ?? 0,
@@ -655,6 +686,7 @@
       description: badge.description,
     }));
   }
+
 </script>
 
 {#if celebration}
@@ -664,7 +696,7 @@
 {#if matchRecap}
   <MatchRecap recap={matchRecap} />
 {:else if matchState}
-  <Match {matchState} {turnState} {liveMatchStats} lifetimeStats={generalAvgSnapshot} />
+  <Match {matchState} {turnState} {liveMatchStats} {playerAwards} lifetimeStats={generalAvgSnapshot} />
 {:else}
 <div class="shell">
 
@@ -718,14 +750,7 @@
   </header>
 
   <!-- ── Body ───────────────────────────────────────────── -->
-  {#if !data}
-    <div class="loading">
-      <span class="loading-dot"></span>
-      <span class="loading-dot"></span>
-      <span class="loading-dot"></span>
-      <span style="margin-left:0.8rem;color:#475569">Se încarcă statisticile…</span>
-    </div>
-  {:else if matchSetup}
+  {#if matchSetup}
     <div class="setup-shell">
       <section class="setup-stage">
         <div class="setup-header">
@@ -820,6 +845,13 @@
           </section>
         </div>
       </section>
+    </div>
+  {:else if !data}
+    <div class="loading">
+      <span class="loading-dot"></span>
+      <span class="loading-dot"></span>
+      <span class="loading-dot"></span>
+      <span style="margin-left:0.8rem;color:#475569">Se încarcă statisticile…</span>
     </div>
   {:else}
     <main class="main">
@@ -1085,7 +1117,12 @@
                           <div class="rec-match-main">
                             <div class="rec-match-winner">
                               <span class="rec-match-winner-label">Câștigător</span>
-                              <span class="rec-match-winner-name">{winner?.name ?? '—'}</span>
+                              <div class="rec-match-winner-ident">
+                                {#if winner?.photo}
+                                  <img class="winner-avatar" src={winner.photo} alt={winner?.name} />
+                                {/if}
+                                <span class="rec-match-winner-name">{winner?.name ?? '—'}</span>
+                              </div>
                             </div>
                             <div class="rec-match-players">{recentMatchOpponentSummary(match)}</div>
                           </div>
@@ -1115,7 +1152,13 @@
                       {#each data.highRoundLeaderboard.slice(0, 6) as p, i}
                         <div class="triple-row">
                           <span class="triple-rank" style="color:{i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#475569'}">{i+1}</span>
-                          <div class="triple-avatar" style="background:{p.color}">{p.name[0].toUpperCase()}</div>
+                          <div class="triple-avatar" style="background:{p.color}">
+                            {#if p.photo}
+                              <img src={p.photo} alt={p.name} />
+                            {:else}
+                              {p.name[0].toUpperCase()}
+                            {/if}
+                          </div>
                           <span class="triple-name">{p.name}</span>
                           <span class="triple-count" style="color:#ffd700">{p.value}</span>
                         </div>
@@ -1139,7 +1182,13 @@
                       {#each data.hundredPlusLeaderboard.slice(0, 6) as p, i}
                         <div class="triple-row">
                           <span class="triple-rank" style="color:{i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#475569'}">{i+1}</span>
-                          <div class="triple-avatar" style="background:{p.color}">{p.name[0].toUpperCase()}</div>
+                          <div class="triple-avatar" style="background:{p.color}">
+                            {#if p.photo}
+                              <img src={p.photo} alt={p.name} />
+                            {:else}
+                              {p.name[0].toUpperCase()}
+                            {/if}
+                          </div>
                           <span class="triple-name">{p.name}</span>
                           <span class="triple-count" style="color:{p.color}">{p.count}</span>
                         </div>
@@ -1173,7 +1222,13 @@
                       {#each scene.leaders20.slice(0, 3) as p, i}
                         <div class="triple-row">
                           <span class="triple-rank" style="color:{i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#475569'}">{i+1}</span>
-                          <div class="triple-avatar" style="background:{p.color}">{p.name[0].toUpperCase()}</div>
+                          <div class="triple-avatar" style="background:{p.color}">
+                            {#if p.photo}
+                              <img src={p.photo} alt={p.name} />
+                            {:else}
+                              {p.name[0].toUpperCase()}
+                            {/if}
+                          </div>
                           <span class="triple-name">{p.name}</span>
                           <span class="triple-count" style="color:{p.color}">{p.count}</span>
                         </div>
@@ -1186,7 +1241,13 @@
                       {#each scene.leaders19.slice(0, 3) as p, i}
                         <div class="triple-row">
                           <span class="triple-rank" style="color:{i===0?'#ffd700':i===1?'#c0c0c0':i===2?'#cd7f32':'#475569'}">{i+1}</span>
-                          <div class="triple-avatar" style="background:{p.color}">{p.name[0].toUpperCase()}</div>
+                          <div class="triple-avatar" style="background:{p.color}">
+                            {#if p.photo}
+                              <img src={p.photo} alt={p.name} />
+                            {:else}
+                              {p.name[0].toUpperCase()}
+                            {/if}
+                          </div>
                           <span class="triple-name">{p.name}</span>
                           <span class="triple-count" style="color:{p.color}">{p.count}</span>
                         </div>
@@ -1303,7 +1364,7 @@
                       <span>Primul la {match.legs_to_win}</span>
                     </div>
                     <div class="history-stats">
-                      <div><span>Scor</span><strong>{match.participants?.map((p) => p.legs_won).join(' - ')}</strong></div>
+                      <div><span>Scor</span><strong>{match.participants?.map((p) => p.legs_won).sort((a,b)=>b-a).slice(0,2).join(' - ')}</strong></div>
                       <div><span>Medie</span><strong>{fmt(match.match_avg)}</strong></div>
                       <div><span>Cel mai bun finish</span><strong>{match.best_finish || '—'}</strong></div>
                     </div>
@@ -2360,6 +2421,16 @@
     width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-size: 0.7rem; font-weight: 800; color: #fff;
+    overflow: hidden;
+  }
+  .triple-avatar img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .rec-match-winner-ident {
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .winner-avatar {
+    width: 22px; height: 22px; border-radius: 50%; object-fit: cover;
   }
   .triple-name { flex: 1; font-size: 0.82rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .triple-count { font-size: 1rem; font-weight: 900; font-variant-numeric: tabular-nums; flex-shrink: 0; }

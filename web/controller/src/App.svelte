@@ -1,5 +1,6 @@
 <script>
   import { onMount, onDestroy, setContext } from 'svelte';
+  import { get } from 'svelte/store';
   import { screen, match, turnState, players, connected, resetMatch } from './stores/match.js';
   import { createWsClient } from '../../shared/ws-client.js';
   import Home from './screens/Home.svelte';
@@ -57,6 +58,21 @@
     }
   }
 
+  async function reviveConnection() {
+    const activeMatch = get(match);
+    if (!activeMatch?.id) return;
+
+    try {
+      if (ws?.socket && !ws.socket.connected) {
+        ws.socket.connect();
+      }
+      ws?.join(activeMatch.id, 'controller');
+      await refreshMatch(activeMatch.id);
+    } catch (e) {
+      console.error('Failed to revive controller connection', e);
+    }
+  }
+
   onMount(async () => {
     ws = createWsClient();
 
@@ -78,7 +94,34 @@
       screen.set('summary');
     });
 
+    const handleWake = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      reviveConnection();
+    };
+
+    const handleOnline = () => {
+      reviveConnection();
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleWake);
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleWake);
+      window.addEventListener('online', handleOnline);
+    }
+
     await loadPlayers();
+
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleWake);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleWake);
+        window.removeEventListener('online', handleOnline);
+      }
+    };
   });
 
   onDestroy(() => ws?.disconnect());

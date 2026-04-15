@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn ssh -o StrictHostKeyChecking=no kenny@zboarasageata.local "sudo reboot"
+expect {
+    "assword:" {
+        send "kali\r"
+        exp_continue
+    }
+    eof
+}

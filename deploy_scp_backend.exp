@@ -1,0 +1,7 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn scp -o StrictHostKeyChecking=no server/src/routes/matches.js kenny@zboarasageata.local:/home/kenny/ZboaraSageata/server/src/routes/
+expect { "assword:" { send "kali\r"; exp_continue } "yes/no" { send "yes\r"; exp_continue } eof }
+
+spawn scp -o StrictHostKeyChecking=no server/src/realtime/room.js kenny@zboarasageata.local:/home/kenny/ZboaraSageata/server/src/realtime/
+expect { "assword:" { send "kali\r"; exp_continue } "yes/no" { send "yes\r"; exp_continue } eof }

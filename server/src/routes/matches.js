@@ -3,9 +3,11 @@
  */
 import { getDb } from '../db/connection.js';
 import { getIo } from '../realtime/io-instance.js';
-import { submitDart, rebuildFromEvents } from '../engine/x01.js';
+import { newLeg, submitDart, rebuildFromEvents } from '../engine/x01.js';
 import { checkoutSuggestion } from '../engine/checkouts.js';
 import { officialThreeDartAverageExpr } from '../stats/averages.js';
+import { invalidateLobbyCache } from '../stats/aggregate.js';
+import { getPendingMatchSetup, pushPendingMatchSetup } from '../realtime/room.js';
 import {
   S_MATCH_STARTED, S_MATCH_STATE, S_DART_ADDED, S_TURN_ENDED, S_LEG_WON, S_MATCH_WON,
   S_CELEBRATION, S_MATCH_PAUSED, matchRoom,
@@ -190,6 +192,43 @@ function resumeMatchTimer(db, matchId) {
   `).run(matchId);
 }
 
+function getOrderedMatchPlayers(db, matchId, { activeOnly = false } = {}) {
+  return db.prepare(`
+    SELECT p.*, mp.position, mp.legs_won, mp.general_avg_start, mp.eliminated_at
+    FROM match_players mp
+    JOIN players p ON p.id = mp.player_id
+    WHERE mp.match_id = ?
+      ${activeOnly ? 'AND mp.eliminated_at IS NULL' : ''}
+    ORDER BY mp.position
+  `).all(matchId);
+}
+
+function getOrderedMatchPlayerIds(db, matchId, { activeOnly = false } = {}) {
+  return db.prepare(`
+    SELECT player_id
+    FROM match_players
+    WHERE match_id = ?
+      ${activeOnly ? 'AND eliminated_at IS NULL' : ''}
+    ORDER BY position
+  `).all(matchId).map((row) => row.player_id);
+}
+
+function skipEliminatedPlayers(state, eliminatedIds = new Set()) {
+  if (!state || state.leg.finished || state.leg.turn.length > 0 || eliminatedIds.size === 0) return state;
+
+  let guard = state.players.length;
+  while (guard > 0) {
+    const currentPlayerId = state.players[state.leg.currentPlayerIdx];
+    if (!eliminatedIds.has(currentPlayerId)) break;
+    state.leg.currentPlayerIdx = (state.leg.currentPlayerIdx + 1) % state.players.length;
+    const nextPlayerId = state.players[state.leg.currentPlayerIdx];
+    state.leg.turnStartRemaining = state.leg.remaining[nextPlayerId];
+    guard -= 1;
+  }
+
+  return state;
+}
+
 function awardFinalAverageBadges(db, matchId) {
   const players = db.prepare(`
     SELECT player_id
@@ -225,6 +264,17 @@ export default async function matchRoutes(fastify) {
   const db = getDb();
   const live = () => getIo()?.of('/live');
 
+  fastify.get('/setup-preview', async () => {
+    return getPendingMatchSetup();
+  });
+
+  fastify.post('/setup-preview', async (req) => {
+    return {
+      ok: true,
+      setup: pushPendingMatchSetup(req.body ?? null),
+    };
+  });
+
   function nextPublicCode() {
     const next = db.prepare(`
       SELECT COALESCE(MAX(CAST(SUBSTR(public_code, 4) AS INTEGER)), 0) + 1 AS next_code
@@ -255,31 +305,69 @@ export default async function matchRoutes(fastify) {
   }
 
   function bestFinishInMatch(matchId, playerId) {
-    return db.prepare(`
-      SELECT MAX(turn_total) AS value
-      FROM (
-        SELECT d.leg_id, d.turn_number, SUM(d.score_value) AS turn_total
-        FROM darts d
-        JOIN legs l ON l.id = d.leg_id
-        WHERE l.match_id = ? AND d.player_id = ?
-        GROUP BY d.leg_id, d.turn_number
-      ) t
-      JOIN legs l ON l.id = t.leg_id
-      WHERE l.winner_id = ? AND turn_total >= 2
-    `).get(matchId, playerId, playerId)?.value ?? 0;
+    const match = db.prepare(`
+      SELECT starting_score, double_out
+      FROM matches
+      WHERE id = ?
+    `).get(matchId);
+    if (!match) return 0;
+
+    const playerIds = db.prepare(`
+      SELECT player_id
+      FROM match_players
+      WHERE match_id = ?
+      ORDER BY position
+    `).all(matchId).map((row) => row.player_id);
+
+    const legs = db.prepare(`
+      SELECT id, starting_id
+      FROM legs
+      WHERE match_id = ?
+      ORDER BY leg_number
+    `).all(matchId);
+
+    let best = 0;
+
+    for (const leg of legs) {
+      const dartRows = db.prepare(`
+        SELECT segment, multiplier
+        FROM darts
+        WHERE leg_id = ?
+        ORDER BY id
+      `).all(leg.id);
+
+      let state = newLeg({
+        startingScore: match.starting_score,
+        doubleOut: match.double_out === 1,
+        players: playerIds,
+        startingPlayerId: leg.starting_id,
+      });
+
+      for (const row of dartRows) {
+        const throwingPlayerId = state.players[state.leg.currentPlayerIdx];
+        const turnStartRemaining = state.leg.turnStartRemaining;
+        const nextState = submitDart(state, { segment: row.segment, multiplier: row.multiplier });
+
+        if (
+          nextState.leg.finished
+          && nextState.leg.winnerId === playerId
+          && throwingPlayerId === playerId
+        ) {
+          best = Math.max(best, Number(turnStartRemaining ?? 0));
+        }
+
+        state = nextState;
+      }
+    }
+
+    return best;
   }
 
   function getMatchFull(matchId) {
     const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(matchId);
     if (!match) return null;
 
-    const players = db.prepare(`
-      SELECT p.*, mp.position, mp.legs_won, mp.general_avg_start
-      FROM match_players mp
-      JOIN players p ON p.id = mp.player_id
-      WHERE mp.match_id = ?
-      ORDER BY mp.position
-    `).all(matchId).map((player) => ({
+    const players = getOrderedMatchPlayers(db, matchId).map((player) => ({
       ...player,
       best_finish: bestFinishInMatch(matchId, player.id),
     }));
@@ -309,33 +397,81 @@ export default async function matchRoutes(fastify) {
     `).all(leg.id);
 
     const playerIds = players.map((p) => p.id);
-    const state = rebuildFromEvents(
-      {
-        startingScore: match.starting_score,
-        doubleOut: match.double_out === 1,
-        players: playerIds,
-        startingPlayerId: leg.starting_id,
-      },
-      dartRows
+    const eliminatedIds = new Set(
+      players
+        .filter((player) => player.eliminated_at)
+        .map((player) => player.id)
+    );
+    const replayOptions = {
+      startingScore: match.starting_score,
+      doubleOut: match.double_out === 1,
+      players: playerIds,
+      startingPlayerId: leg.starting_id,
+    };
+    const state = skipEliminatedPlayers(
+      rebuildFromEvents(replayOptions, dartRows),
+      eliminatedIds
     );
 
     const currentPlayerId = state.players[state.leg.currentPlayerIdx];
     const dartsLeft = 3 - state.leg.turn.length;
+    const completedTurns = [];
+    let replayState = newLeg(replayOptions);
+    let replayTurnDarts = [];
 
-    // Last completed turn (for TV display)
-    const currentTurnNum = state.leg.turn.length > 0
-      ? (db.prepare('SELECT MAX(turn_number) AS t FROM darts WHERE leg_id = ? AND player_id = ?')
-          .get(leg.id, currentPlayerId)?.t ?? 1)
-      : null;
-    const lastTurnInfo = db.prepare(`
-      SELECT player_id, turn_number FROM darts
-      WHERE leg_id = ? AND NOT (player_id = ? AND turn_number = ?)
-      ORDER BY id DESC LIMIT 1
-    `).get(leg.id, currentPlayerId, currentTurnNum ?? -1);
-    const lastTurnDarts = lastTurnInfo
-      ? db.prepare('SELECT * FROM darts WHERE leg_id = ? AND player_id = ? AND turn_number = ? ORDER BY dart_in_turn')
-          .all(leg.id, lastTurnInfo.player_id, lastTurnInfo.turn_number)
-      : null;
+    for (const row of dartRows) {
+      const previousPlayerId = replayState.players[replayState.leg.currentPlayerIdx];
+      const previousTurnStartRemaining = replayState.leg.turnStartRemaining;
+      const previousPlayerIdx = replayState.leg.currentPlayerIdx;
+      replayTurnDarts.push(row);
+      replayState = submitDart(replayState, { segment: row.segment, multiplier: row.multiplier });
+
+      if (replayState.leg.finished || replayState.leg.currentPlayerIdx !== previousPlayerIdx) {
+        const busted = replayTurnDarts.some((dart) => dart.busted === 1);
+        completedTurns.push({
+          player_id: previousPlayerId,
+          turn_number: row.turn_number,
+          darts: replayTurnDarts,
+          remaining_after: busted ? previousTurnStartRemaining : (replayState.leg.remaining[previousPlayerId] ?? 0),
+        });
+        replayTurnDarts = [];
+      }
+    }
+
+    const lastCompletedTurn = completedTurns.at(-1) ?? null;
+    const lastTurnDarts = lastCompletedTurn?.darts ?? [];
+    const playerVisits = Object.fromEntries(
+      playerIds.map((playerId) => [playerId, { current: [], lastCompleted: [] }])
+    );
+
+    // Count turns and darts per player
+    const playerTurnCounts = {};
+    const playerDartCounts = {};
+    for (const turn of completedTurns) {
+      playerTurnCounts[turn.player_id] = (playerTurnCounts[turn.player_id] ?? 0) + 1;
+      playerDartCounts[turn.player_id] = (playerDartCounts[turn.player_id] ?? 0) + turn.darts.length;
+    }
+
+    for (const turn of completedTurns) {
+      playerVisits[turn.player_id] = {
+        ...(playerVisits[turn.player_id] ?? { current: [], lastCompleted: [] }),
+        lastCompleted: turn.darts,
+      };
+    }
+
+    playerVisits[currentPlayerId] = {
+      ...(playerVisits[currentPlayerId] ?? { current: [], lastCompleted: [] }),
+      current: state.leg.turn,
+    };
+
+    // Attach cumulative stats to each player's visit entry
+    for (const pid of playerIds) {
+      playerVisits[pid] = {
+        ...(playerVisits[pid] ?? { current: [], lastCompleted: [] }),
+        turnsCompleted: playerTurnCounts[pid] ?? 0,
+        dartsThrown: (playerDartCounts[pid] ?? 0) + (pid === currentPlayerId ? state.leg.turn.length : 0),
+      };
+    }
 
     return {
       remaining:        state.leg.remaining,
@@ -347,6 +483,8 @@ export default async function matchRoutes(fastify) {
       winnerId:         state.leg.winnerId,
       celebration:      state.celebration,
       lastTurnDarts,
+      lastTurnRemaining: lastCompletedTurn?.remaining_after ?? null,
+      playerVisits,
       checkoutHint:     checkoutSuggestion(
         state.leg.remaining[currentPlayerId],
         dartsLeft,
@@ -445,11 +583,9 @@ export default async function matchRoutes(fastify) {
     }
 
     const firstPlayer = db.prepare(
-      'SELECT player_id FROM match_players WHERE match_id = ? ORDER BY position LIMIT 1'
+      'SELECT player_id FROM match_players WHERE match_id = ? AND eliminated_at IS NULL ORDER BY position LIMIT 1'
     ).get(id);
-    const playerIds = db.prepare(
-      'SELECT player_id FROM match_players WHERE match_id = ? ORDER BY position'
-    ).all(id).map((row) => row.player_id);
+    const playerIds = getOrderedMatchPlayerIds(db, id, { activeOnly: true });
 
     db.transaction(() => {
       for (const playerId of playerIds) {
@@ -512,7 +648,6 @@ export default async function matchRoutes(fastify) {
       return reply.code(409).send({ error: { code: 'INVALID_STATE', message: `Match is ${existing.status}` } });
     }
 
-    resumeMatchTimer(db, id);
     const full = getMatchFull(id);
     live()?.emit(S_MATCH_STARTED, { matchId: id });
     return full;
@@ -538,16 +673,20 @@ export default async function matchRoutes(fastify) {
 
     const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(id);
     if (!match) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Match not found' } });
-    if (match.status !== 'live') {
-      return reply.code(409).send({ error: { code: 'INVALID_STATE', message: 'Match is not live' } });
+    if (!['live', 'finished'].includes(match.status)) {
+      return reply.code(409).send({ error: { code: 'INVALID_STATE', message: `Match is ${match.status}` } });
     }
 
     const leg = db.prepare('SELECT * FROM legs WHERE match_id = ? AND ended_at IS NULL ORDER BY leg_number DESC LIMIT 1').get(id);
     if (!leg) return reply.code(409).send({ error: { code: 'NO_ACTIVE_LEG', message: 'No active leg' } });
 
-    const players = db.prepare(
-      'SELECT player_id FROM match_players WHERE match_id = ? ORDER BY position'
-    ).all(id).map((r) => r.player_id);
+    const participants = getOrderedMatchPlayers(db, id);
+    const players = participants.map((player) => player.id);
+    const eliminatedIds = new Set(
+      participants
+        .filter((player) => player.eliminated_at)
+        .map((player) => player.id)
+    );
 
     const dartRows = db.prepare('SELECT * FROM darts WHERE leg_id = ? ORDER BY id').all(leg.id);
     const opts = {
@@ -557,7 +696,7 @@ export default async function matchRoutes(fastify) {
       startingPlayerId: leg.starting_id,
     };
 
-    let state = rebuildFromEvents(opts, dartRows);
+    let state = skipEliminatedPlayers(rebuildFromEvents(opts, dartRows), eliminatedIds);
 
     // Determine turn_number for this dart
     const currentTurnLen = state.leg.turn.length;
@@ -579,6 +718,7 @@ export default async function matchRoutes(fastify) {
     let newState;
     try {
       newState = submitDart(state, { segment, multiplier });
+      newState = skipEliminatedPlayers(newState, eliminatedIds);
     } catch (err) {
       return reply.code(400).send({ error: { code: 'ENGINE_ERROR', message: err.message } });
     }
@@ -622,9 +762,10 @@ export default async function matchRoutes(fastify) {
           `).run(winnerId, nextPublicCode(), id);
         } else {
           // Start next leg
+          const activePlayerIds = getOrderedMatchPlayerIds(db, id, { activeOnly: true });
           const legCount = db.prepare('SELECT COUNT(*) AS c FROM legs WHERE match_id = ?').get(id).c;
-          const nextStarterIdx = legCount % players.length;
-          const nextStarterId = players[nextStarterIdx];
+          const nextStarterIdx = legCount % activePlayerIds.length;
+          const nextStarterId = activePlayerIds[nextStarterIdx];
           db.prepare('INSERT INTO legs (match_id, leg_number, starting_id) VALUES (?, ?, ?)').run(id, legCount + 1, nextStarterId);
         }
       }
@@ -632,11 +773,7 @@ export default async function matchRoutes(fastify) {
 
     // Build response turnState
     const updatedMatch = db.prepare('SELECT * FROM matches WHERE id = ?').get(id);
-    const updatedPlayers = db.prepare(`
-      SELECT p.*, mp.position, mp.legs_won
-      FROM match_players mp JOIN players p ON p.id = mp.player_id
-      WHERE mp.match_id = ? ORDER BY mp.position
-    `).all(id);
+    const updatedPlayers = getOrderedMatchPlayers(db, id);
     const updatedLeg = db.prepare('SELECT * FROM legs WHERE match_id = ? ORDER BY leg_number DESC LIMIT 1').get(id);
     const turnState = buildTurnState(updatedLeg, updatedMatch, updatedPlayers);
 
@@ -674,10 +811,16 @@ export default async function matchRoutes(fastify) {
     if (newState.leg.currentPlayerIdx !== prevPlayerIdx || newState.leg.finished) {
       if (newState.leg.finished) {
         const full = getMatchFull(id);
-        live()?.to(room).emit(S_LEG_WON, { legId: leg.id, winnerId: newState.leg.winnerId, matchState: full });
+        live()?.to(room).emit(S_LEG_WON, {
+          legId: leg.id,
+          winnerId: newState.leg.winnerId,
+          matchState: full,
+          playerAwards: getPlayerAwardsForMatch(id),
+        });
 
         if (updatedMatch.status === 'finished') {
           awardFinalAverageBadges(db, id);
+          invalidateLobbyCache();
           live()?.to(room).emit(S_MATCH_WON, { matchId: id, winnerId: newState.leg.winnerId });
         }
       } else {
@@ -700,8 +843,8 @@ export default async function matchRoutes(fastify) {
 
     const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(id);
     if (!match) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Match not found' } });
-    if (match.status !== 'live') {
-      return reply.code(409).send({ error: { code: 'INVALID_STATE', message: 'Match is not live' } });
+    if (!['live', 'finished'].includes(match.status)) {
+      return reply.code(409).send({ error: { code: 'INVALID_STATE', message: `Match is ${match.status}` } });
     }
 
     // Find the most recently closed leg (if leg just finished) or active leg
@@ -732,11 +875,7 @@ export default async function matchRoutes(fastify) {
     })();
 
     const updatedMatch = db.prepare('SELECT * FROM matches WHERE id = ?').get(id);
-    const updatedPlayers = db.prepare(`
-      SELECT p.*, mp.position, mp.legs_won
-      FROM match_players mp JOIN players p ON p.id = mp.player_id
-      WHERE mp.match_id = ? ORDER BY mp.position
-    `).all(id);
+    const updatedPlayers = getOrderedMatchPlayers(db, id);
     const currentLeg = db.prepare('SELECT * FROM legs WHERE match_id = ? AND ended_at IS NULL ORDER BY leg_number DESC LIMIT 1').get(id);
     const turnState = buildTurnState(currentLeg, updatedMatch, updatedPlayers);
 
@@ -746,6 +885,101 @@ export default async function matchRoutes(fastify) {
     return turnState;
   });
 
+  fastify.post('/:id/eliminate', {
+    schema: {
+      params: { type: 'object', properties: { id: { type: 'integer' } } },
+      body: {
+        type: 'object',
+        required: ['playerId'],
+        properties: {
+          playerId: { type: 'integer' },
+        },
+      },
+    },
+  }, async (req, reply) => {
+    const { id } = req.params;
+    const { playerId } = req.body;
+
+    const match = db.prepare('SELECT * FROM matches WHERE id = ?').get(id);
+    if (!match) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'Match not found' } });
+    if (match.status !== 'live') {
+      return reply.code(409).send({ error: { code: 'INVALID_STATE', message: `Match is ${match.status}` } });
+    }
+
+    const participant = db.prepare(`
+      SELECT *
+      FROM match_players
+      WHERE match_id = ? AND player_id = ?
+    `).get(id, playerId);
+    if (!participant) {
+      return reply.code(404).send({ error: { code: 'PLAYER_NOT_IN_MATCH', message: 'Player is not part of this match' } });
+    }
+    if (participant.eliminated_at) {
+      return getMatchFull(id);
+    }
+
+    const participants = getOrderedMatchPlayers(db, id);
+    const activePlayers = participants.filter((player) => !player.eliminated_at);
+    if (activePlayers.length <= 1) {
+      return reply.code(409).send({ error: { code: 'NO_ACTIVE_OPPONENTS', message: 'No other active players remain' } });
+    }
+
+    const activeLeg = db.prepare('SELECT * FROM legs WHERE match_id = ? AND ended_at IS NULL ORDER BY leg_number DESC LIMIT 1').get(id);
+    const turnState = activeLeg ? buildTurnState(activeLeg, match, participants) : null;
+    if (
+      turnState
+      && turnState.currentPlayerId === playerId
+      && (turnState.turn?.length ?? 0) > 0
+    ) {
+      return reply.code(409).send({
+        error: {
+          code: 'PLAYER_ACTIVE_TURN',
+          message: 'Nu poți elimina jucătorul activ după ce a început deja tura. Elimină-l înainte să arunce sau după tură.',
+        },
+      });
+    }
+
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE match_players
+        SET eliminated_at = datetime('now')
+        WHERE match_id = ? AND player_id = ? AND eliminated_at IS NULL
+      `).run(id, playerId);
+
+      const remainingActiveIds = getOrderedMatchPlayerIds(db, id, { activeOnly: true });
+      if (remainingActiveIds.length === 1) {
+        const winnerId = remainingActiveIds[0];
+
+        if (activeLeg && !activeLeg.ended_at) {
+          db.prepare(`
+            UPDATE legs
+            SET winner_id = ?, ended_at = datetime('now')
+            WHERE id = ?
+          `).run(winnerId, activeLeg.id);
+          db.prepare(`
+            UPDATE match_players
+            SET legs_won = legs_won + 1
+            WHERE match_id = ? AND player_id = ?
+          `).run(id, winnerId);
+        }
+
+        pauseMatchTimer(db, id);
+        db.prepare(`
+          UPDATE matches
+          SET status = 'finished',
+              ended_at = datetime('now'),
+              winner_id = ?,
+              public_code = COALESCE(public_code, ?)
+          WHERE id = ?
+        `).run(winnerId, nextPublicCode(), id);
+      }
+    })();
+
+    const full = getMatchFull(id);
+    live()?.to(matchRoom(id)).emit(S_MATCH_STATE, { ...full, playerAwards: getPlayerAwardsForMatch(id) });
+    return full;
+  });
+
   // ── POST /api/matches/:id/exit ──────────────────────────────────────────
   // Controller user pressed Ieșire — keep match live but signal TV to lobby
 
@@ -753,8 +987,21 @@ export default async function matchRoutes(fastify) {
     schema: { params: { type: 'object', properties: { id: { type: 'integer' } } } },
   }, async (req, reply) => {
     const { id } = req.params;
-    pauseMatchTimer(db, id);
     live()?.to(matchRoom(id)).emit(S_MATCH_PAUSED, { matchId: id });
+    return reply.code(204).send();
+  });
+
+  fastify.post('/:id/tv-join', {
+    schema: { params: { type: 'object', properties: { id: { type: 'integer' } } } },
+  }, async (req, reply) => {
+    resumeMatchTimer(db, req.params.id);
+    return reply.code(204).send();
+  });
+
+  fastify.post('/:id/tv-leave', {
+    schema: { params: { type: 'object', properties: { id: { type: 'integer' } } } },
+  }, async (req, reply) => {
+    pauseMatchTimer(db, req.params.id);
     return reply.code(204).send();
   });
 }

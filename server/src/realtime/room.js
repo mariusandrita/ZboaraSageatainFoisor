@@ -13,7 +13,7 @@ import {
  */
 export function setupRealtime(io, fastify) {
   const live = io.of('/live');
-  let pendingMatchSetup = null;
+  liveNamespace = live;
 
   live.on('connection', (socket) => {
     fastify.log.info(`WS connect: ${socket.id}`);
@@ -31,6 +31,10 @@ export function setupRealtime(io, fastify) {
       socket.data.role = role;
 
       fastify.log.info(`WS join: ${socket.id} → ${room} as ${role}`);
+
+      if (role === 'tv') {
+        try { await fastify.inject({ method: 'POST', url: `/api/matches/${matchId}/tv-join` }); } catch (e) {}
+      }
 
       // Send full state snapshot (including turnState) to the joining client
       try {
@@ -84,12 +88,29 @@ export function setupRealtime(io, fastify) {
     });
 
     socket.on(C_MATCH_SETUP, (setup) => {
-      pendingMatchSetup = setup ?? null;
-      live.emit(S_MATCH_SETUP, pendingMatchSetup);
+      fastify.log.info(`[setup] WS match:setup:update received from ${socket.id}`);
+      pushPendingMatchSetup(setup);
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
       fastify.log.info(`WS disconnect: ${socket.id}`);
+      if (socket.data.role === 'tv' && socket.data.matchId) {
+        try { await fastify.inject({ method: 'POST', url: `/api/matches/${socket.data.matchId}/tv-leave` }); } catch (e) {}
+      }
     });
   });
+}
+
+let pendingMatchSetup = null;
+let liveNamespace = null;
+
+export function getPendingMatchSetup() {
+  return pendingMatchSetup;
+}
+
+export function pushPendingMatchSetup(setup) {
+  pendingMatchSetup = setup ?? null;
+  console.info('[setup] pushed match setup, broadcasting to live namespace, setup=', JSON.stringify(pendingMatchSetup)?.slice(0, 120));
+  liveNamespace?.emit(S_MATCH_SETUP, pendingMatchSetup);
+  return pendingMatchSetup;
 }

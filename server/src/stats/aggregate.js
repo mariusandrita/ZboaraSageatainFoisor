@@ -3,6 +3,16 @@ import { AWARD_PRIORITY, BADGE_CATALOG, sortBadgesByPriority } from '../catalog.
 import { rebuildFromEvents } from '../engine/x01.js';
 import { officialThreeDartAverageExpr } from './averages.js';
 
+// ── Lobby data cache (55s TTL — TV refreshes every 60s) ──────────────────────
+let _lobbyCache = null;
+let _lobbyCacheAt = 0;
+const LOBBY_CACHE_TTL = 10 * 60_000; // 10 minute — refresh less often to avoid blocking event loop
+
+export function invalidateLobbyCache() {
+  _lobbyCache = null;
+  _lobbyCacheAt = 0;
+}
+
 function finishedMatchClause(alias = 'm') {
   return `${alias}.status = 'finished'`;
 }
@@ -604,6 +614,11 @@ export function matchTvRecap(matchId) {
  * Lobby stats intentionally count only finished matches.
  */
 export function lobbyData() {
+  const now = Date.now();
+  if (_lobbyCache && (now - _lobbyCacheAt) < LOBBY_CACHE_TTL) {
+    return _lobbyCache;
+  }
+
   const db = getDb();
   const awardsByPlayer = awardsForPlayers(db);
 
@@ -951,7 +966,7 @@ export function lobbyData() {
     };
   });
 
-  return {
+  const result = {
     top,
     recentMatches,
     highRound: highRound ?? null,
@@ -990,6 +1005,10 @@ export function lobbyData() {
       });
     })(),
   };
+
+  _lobbyCache = result;
+  _lobbyCacheAt = Date.now();
+  return result;
 }
 
 /**

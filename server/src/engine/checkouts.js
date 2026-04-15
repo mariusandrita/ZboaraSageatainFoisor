@@ -162,28 +162,93 @@ THREE_DART[121] = [[20,3],[11,3],[20,2]]; // T20 T11 D20 = 60+33+40=133 nope
 // Standard 121: T20 T11 D20? 60+33+28=121 ✓
 THREE_DART[121] = [[20,3],[11,3],[14,2]]; // T20 T11 D14 = 60+33+28=121 ✓
 
+const STRAIGHT_OUT_LIMIT = 179;
+const DOUBLE_OUT_BLOCKED = new Set([159, 162, 163, 165, 166, 168, 169]);
+
+const OPENING_THROWS = [
+  ...Array.from({ length: 20 }, (_, idx) => 20 - idx).map((segment) => ({ segment, multiplier: 3 })),
+  { segment: 25, multiplier: 2 },
+  ...Array.from({ length: 20 }, (_, idx) => 20 - idx).map((segment) => ({ segment, multiplier: 2 })),
+  { segment: 25, multiplier: 1 },
+  ...Array.from({ length: 20 }, (_, idx) => 20 - idx).map((segment) => ({ segment, multiplier: 1 })),
+];
+
+const FINISHING_THROWS_STRAIGHT = [
+  ...Array.from({ length: 20 }, (_, idx) => 20 - idx).map((segment) => ({ segment, multiplier: 2 })),
+  { segment: 25, multiplier: 2 },
+  ...Array.from({ length: 20 }, (_, idx) => 20 - idx).map((segment) => ({ segment, multiplier: 3 })),
+  { segment: 25, multiplier: 1 },
+  ...Array.from({ length: 20 }, (_, idx) => 20 - idx).map((segment) => ({ segment, multiplier: 1 })),
+];
+
+const FINISHING_THROWS_DOUBLE = [
+  ...Array.from({ length: 20 }, (_, idx) => 20 - idx).map((segment) => ({ segment, multiplier: 2 })),
+  { segment: 25, multiplier: 2 },
+];
+
+function throwScore(throwOption) {
+  return throwOption.segment * throwOption.multiplier;
+}
+
+function solveCheckout(remaining, dartsLeft, doubleOut, path = []) {
+  if (remaining === 0) return path;
+  if (dartsLeft <= 0 || remaining < 0) return null;
+
+  const options = dartsLeft === 1
+    ? (doubleOut ? FINISHING_THROWS_DOUBLE : FINISHING_THROWS_STRAIGHT)
+    : OPENING_THROWS;
+
+  for (const option of options) {
+    const score = throwScore(option);
+    if (score > remaining) continue;
+
+    const solved = solveCheckout(
+      remaining - score,
+      dartsLeft - 1,
+      doubleOut,
+      [...path, option]
+    );
+
+    if (solved) return solved;
+  }
+
+  return null;
+}
+
 /**
- * Returns checkout suggestion for a given remaining score.
+ * Returns out suggestion for a given remaining score.
+ * In double-out, prefers the classic tables; in straight-out it computes a route.
+ *
  * @param {number} remaining
  * @param {number} dartsLeft - 1, 2, or 3
  * @param {boolean} doubleOut
  * @returns {Array<{segment:number, multiplier:number}>|null}
  */
 export function checkoutSuggestion(remaining, dartsLeft, doubleOut) {
-  if (!doubleOut) return null; // straight-out: no suggestion needed
-  if (remaining < 2 || remaining > 170 || remaining === 169 || remaining === 168 ||
-      remaining === 166 || remaining === 165 || remaining === 163 || remaining === 162 ||
-      remaining === 159) {
-    return null; // not a valid finish
+  const score = Number(remaining);
+  const darts = Math.max(1, Math.min(3, Number(dartsLeft) || 3));
+
+  if (!Number.isFinite(score)) return null;
+
+  if (doubleOut) {
+    if (
+      score < 2
+      || score > 170
+      || DOUBLE_OUT_BLOCKED.has(score)
+    ) {
+      return null;
+    }
+
+    const fmt = (path) => path.map(([segment, multiplier]) => ({ segment, multiplier }));
+
+    if (darts >= 1 && ONE_DART[score]) return fmt(ONE_DART[score]);
+    if (darts >= 2 && TWO_DART[score]) return fmt(TWO_DART[score]);
+    if (darts >= 3 && THREE_DART[score]) return fmt(THREE_DART[score]);
+  } else if (score < 1 || score > STRAIGHT_OUT_LIMIT) {
+    return null;
   }
 
-  const fmt = (path) => path.map(([segment, multiplier]) => ({ segment, multiplier }));
-
-  if (dartsLeft >= 1 && ONE_DART[remaining]) return fmt(ONE_DART[remaining]);
-  if (dartsLeft >= 2 && TWO_DART[remaining]) return fmt(TWO_DART[remaining]);
-  if (dartsLeft >= 3 && THREE_DART[remaining]) return fmt(THREE_DART[remaining]);
-
-  return null;
+  return solveCheckout(score, darts, doubleOut);
 }
 
 export { ONE_DART, TWO_DART, THREE_DART };

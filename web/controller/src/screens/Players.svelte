@@ -298,7 +298,6 @@
     bind:this={fileInput}
     type="file"
     accept="image/*"
-    capture="user"
     style="display:none"
     on:change={onFileSelected}
   />

@@ -57,6 +57,9 @@ await fastify.ready();
 
 const io = new SocketIO(fastify.server, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
+  pingInterval: 25000,
+  pingTimeout: 120000,
+  transports: ['websocket', 'polling'],
 });
 
 setIo(io);
@@ -66,10 +69,25 @@ await fastify.listen({ port: PORT, host: HOST });
 fastify.log.info(`DartsLeague running on http://${HOST}:${PORT}`);
 
 // ── Graceful shutdown ──────────────────────────────────────────────────────
+let shuttingDown = false;
+
 const shutdown = async () => {
+  if (shuttingDown) return;
+  shuttingDown = true;
   fastify.log.info('Shutting down...');
-  await fastify.close();
-  process.exit(0);
+
+  const forceExit = setTimeout(() => {
+    fastify.log.warn('Forcing shutdown after timeout');
+    process.exit(0);
+  }, 5000);
+
+  try {
+    await new Promise((resolve) => io.close(resolve));
+    await fastify.close();
+  } finally {
+    clearTimeout(forceExit);
+    process.exit(0);
+  }
 };
 
 process.on('SIGTERM', shutdown);

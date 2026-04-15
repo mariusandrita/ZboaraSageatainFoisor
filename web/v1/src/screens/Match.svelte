@@ -6,6 +6,7 @@
   export let matchState = null;
   export let turnState = null;
   export let liveMatchStats = [];
+  export let playerAwards = {};
   export let lifetimeStats = {};
 
   let elapsedStr = '';
@@ -124,10 +125,10 @@
     ? 'La 61 nu merge doar 20, 20, 20.'
     : '';
 
-  function liveBadgeFor(playerId) {
-    const awards = liveMatchStats.find((stats) => stats.player_id === playerId)?.awards ?? [];
-    const topAward = awards.find((award) => award.kind !== 'overAvg');
-    return topAward ?? null;
+  function liveBadgesFor(playerId) {
+    return playerAwards?.[playerId]
+      ?? liveMatchStats.find((stats) => stats.player_id === playerId)?.awards
+      ?? [];
   }
 
   const SEGMENT_LEGEND = [
@@ -153,7 +154,7 @@
     localTimeStr = formatLocalTime();
   }
 
-  $: players = matchState?.players ?? [];
+  $: players = (matchState?.players ?? []).filter((player) => !player.eliminated_at);
   $: activeLeg = matchState?.activeLeg ?? null;
   $: currentPlayerId = turnState?.currentPlayerId ?? null;
   $: activeIndex = players.findIndex((player) => player.id === currentPlayerId);
@@ -164,20 +165,40 @@
   $: lastTurnDarts = turnState?.lastTurnDarts ?? [];
   $: lastTurnPlayer = players.find((player) => player.id === lastTurnDarts[0]?.player_id) ?? null;
   $: lastTurnTotal = lastTurnDarts.reduce((sum, dart) => sum + dartScore(dart), 0);
+  $: lastTurnRemaining = turnState?.lastTurnRemaining ?? null;
   $: activePosition = activeIndex >= 0 ? activeIndex + 1 : null;
   $: headerMeta = matchState
     ? `${matchState.starting_score} · Manșa ${activeLeg?.leg_number ?? '?'} · Best of ${matchState.legs_to_win * 2 - 1} · ${doubleOutActive ? 'Double Out' : 'Straight Out'}`
     : '';
-  $: playersOrdered = players.length === 0 || activeIndex < 0
-    ? players
-    : [...players.slice(activeIndex), ...players.slice(0, activeIndex)];
-  $: nextPlayer = playersOrdered[1] ?? null;
+  $: nextPlayers = activeIndex >= 0 && playerCount > 1
+    ? Array.from({ length: Math.min(8, playerCount - 1) }, (_, i) => players[(activeIndex + 1 + i) % playerCount]).filter(Boolean)
+    : [];
   $: playerCount = players.length || 1;
   $: multiLegMatch = (matchState?.legs_to_win ?? 1) > 1;
   $: boardDarts = turn.length > 0 ? turn : lastTurnDarts;
   $: boardLatestDart = boardDarts.length > 0 ? boardDarts[boardDarts.length - 1] : null;
   $: boardPlayer = players.find((player) => player.id === boardDarts[0]?.player_id) ?? null;
   $: boardTotal = boardDarts.reduce((sum, dart) => sum + dartScore(dart), 0);
+  $: currentLiveBadges = currentPlayerId ? liveBadgesFor(currentPlayerId) : [];
+  $: compactSidebar = playerCount >= 7;
+  $: gridSidebar = playerCount >= 7;
+  $: playOrderById = new Map(players.map((player, index) => [player.id, index]));
+  $: playersById = new Map(players.map((player) => [player.id, player]));
+  $: remainingStandings = players
+    .map((player) => ({
+      id: player.id,
+      remaining: turnState?.remaining?.[player.id] ?? matchState?.starting_score ?? 0,
+      playOrder: playOrderById.get(player.id) ?? 0,
+    }))
+    .sort((a, b) => a.remaining - b.remaining || a.playOrder - b.playOrder)
+    .map((entry, index) => ({ ...entry, place: index + 1 }));
+  $: remainingRankByPlayer = new Map(remainingStandings.map((entry) => [entry.id, entry.place]));
+  $: rankedPlayers = remainingStandings
+    .map((entry) => ({
+      ...entry,
+      player: playersById.get(entry.id),
+    }))
+    .filter((entry) => entry.player);
 
   function progressWidth(playerId) {
     const start = matchState?.starting_score ?? 0;
@@ -185,6 +206,27 @@
     if (start <= 0) return 0;
     const completed = ((start - remaining) / start) * 100;
     return Math.max(0, Math.min(100, completed));
+  }
+
+  function playerVisitFor(playerId) {
+    const pVisits = turnState?.playerVisits?.[playerId];
+    const isCurrent = playerId === turnState?.currentPlayerId;
+    const currentDarts = pVisits?.current ?? [];
+    return (isCurrent && currentDarts.length > 0) ? currentDarts : (pVisits?.lastCompleted ?? []);
+  }
+
+  function playerLegStats(playerId) {
+    const visit = turnState?.playerVisits?.[playerId];
+    return {
+      turnsCompleted: visit?.turnsCompleted ?? 0,
+      dartsThrown: visit?.dartsThrown ?? 0,
+    };
+  }
+
+  function currentTurnSlotScore(dart) {
+    if (!dart) return 'în așteptare';
+    if (dart.busted) return 'S0';
+    return `S${dartScore(dart)}`;
   }
 
   onDestroy(() => {
@@ -212,21 +254,6 @@
     </div>
 
     <div class="topbar-right">
-      {#if nextPlayer}
-        <div class="next-player-chip">
-          <span class="next-player-label">Urmează</span>
-          <div class="next-player-main">
-            <div class="next-player-avatar">
-              {#if nextPlayer.photo}
-                <img src={nextPlayer.photo} alt={nextPlayer.name} />
-              {:else}
-                <span>{safeInitial(nextPlayer.name)}</span>
-              {/if}
-            </div>
-            <strong>{nextPlayer.name}</strong>
-          </div>
-        </div>
-      {/if}
       <div class="clock">{localTimeStr}</div>
     </div>
   </header>
@@ -246,6 +273,25 @@
 
             <div class="spotlight-copy">
               <div class="spotlight-name">{currentPlayer?.name ?? '—'}</div>
+              {#if nextPlayers.length > 0}
+                <div class="spotlight-next">
+                  <span>Urmează</span>
+                  <div class="spotlight-next-group">
+                    {#each nextPlayers as p}
+                      <div class="spotlight-next-main">
+                        <div class="spotlight-next-avatar">
+                          {#if p.photo}
+                            <img src={p.photo} alt={p.name} />
+                          {:else}
+                            <span>{safeInitial(p.name)}</span>
+                          {/if}
+                        </div>
+                        <strong>{p.name}</strong>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
             </div>
           </div>
 
@@ -266,15 +312,33 @@
             <div class="visit-darts">
               {#each Array(3) as _, i}
                 <div class={`dart-card ${turn[i] ? dartTone(turn[i]) : ''}`} class:filled={i < turn.length} class:busted={turn[i]?.busted}>
+                  <span class="dart-slot-label">T{i + 1}</span>
                   <span class="dart-name">{turn[i] ? dartLabel(turn[i]) : `D${i + 1}`}</span>
-                  <small>{turn[i] ? dartScore(turn[i]) : 'în așteptare'}</small>
+                  <small>{currentTurnSlotScore(turn[i])}</small>
                 </div>
               {/each}
             </div>
+            {#if currentLiveBadges.length > 0}
+              <div class="current-badge-panel">
+                <div class="current-badge-copy">
+                  <span class="current-badge-label">Badge-uri meci</span>
+                  <strong>{currentPlayer?.name ?? 'Jucător'}</strong>
+                </div>
+                <div class="current-badge-list">
+                  {#each currentLiveBadges as badge (badge.kind)}
+                    <BadgeToken
+                      kind={badge.kind}
+                      count={badge.count}
+                      compact={true}
+                    />
+                  {/each}
+                </div>
+              </div>
+            {/if}
             <div class="visit-meta">
               <span>Săgeți rămase: <strong>{turnState?.dartsLeft ?? 3}</strong></span>
               {#if turnState?.checkoutHint && !turnState?.busted}
-                <span>Checkout: <strong>{checkoutLabel(turnState.checkoutHint)}</strong></span>
+                <span>Out: <strong>{checkoutLabel(turnState.checkoutHint)}</strong></span>
               {:else}
                 <span>Stare: <strong>{turnState?.busted ? 'BUST' : 'În joc'}</strong></span>
               {/if}
@@ -291,6 +355,9 @@
               <div class="previous-player">
                 <div class="tiny-dot" style="background:{lastTurnPlayer?.color ?? '#8aa0c1'}"></div>
                 <span>{lastTurnPlayer?.name ?? '?'}</span>
+                {#if lastTurnRemaining != null}
+                  <span class="previous-remaining">a rămas cu <strong>{lastTurnRemaining}</strong></span>
+                {/if}
               </div>
               <div class="visit-darts compact">
                 {#each lastTurnDarts as dart, i}
@@ -342,67 +409,80 @@
       </div>
     </section>
 
-    <aside class="scoreboard panel">
+    <aside class="scoreboard panel" class:compact={compactSidebar} class:grid={gridSidebar}>
       <div class="scoreboard-head">
         <div>
           <div class="eyebrow">Scor live</div>
-          <div class="scoreboard-title">Ordine de joc și progres</div>
         </div>
       </div>
 
       <div class="scoreboard-list">
-        {#each playersOrdered as player, idx (player.id)}
+        {#each rankedPlayers as entry (entry.id)}
+          {@const player = entry.player}
           {@const isActive = player.id === currentPlayerId}
-          {@const rem = turnState?.remaining?.[player.id] ?? matchState?.starting_score}
-          {@const liveBadge = liveBadgeFor(player.id)}
           {@const avgState = avgTrend(player.id)}
-          <article class="player-card" class:active={isActive} style="--c:{player.color}">
-            <div class="player-main">
-              <div class="player-rank">{idx === 0 ? 'LIVE' : `#${((activeIndex + idx) % playerCount) + 1}`}</div>
+          {@const remainingRank = entry.place}
+          {@const visitDarts = playerVisitFor(player.id)}
+          <article class="player-card" class:active={isActive} class:compact={compactSidebar} style="--c:{player.color}">
+            <div class="player-body">
+              <div class="player-main">
+                <div class="player-avatar">
+                  {#if player.photo}
+                    <img src={player.photo} alt={player.name} />
+                  {:else}
+                    <span>{safeInitial(player.name)}</span>
+                  {/if}
+                </div>
 
-              <div class="player-avatar">
-                {#if player.photo}
-                  <img src={player.photo} alt={player.name} />
-                {:else}
-                  <span>{safeInitial(player.name)}</span>
-                {/if}
-              </div>
-
-              <div class="player-copy">
-                <div class="player-name">{player.name}</div>
-                <div class="player-sub">{isActive ? 'La aruncare acum' : 'În așteptare'}</div>
-                {#if liveBadge}
-                  <div class="live-badge-row">
-                    <BadgeToken kind={liveBadge.kind} count={liveBadge.count} compact={true} />
-                  </div>
-                {/if}
-                <div class="player-avgs">
-                  <div class="player-avg-item" class:up={avgState === 'up'} class:down={avgState === 'down'}>
-                    <small>meci</small>
-                    <strong>{formatAvg(matchAvgFor(player.id))}</strong>
-                  </div>
-                  <div class="player-avg-item">
-                    <small>general</small>
-                    <span>{formatAvg(generalAvgFor(player.id))}</span>
-                  </div>
+                <div class="player-copy">
+                  <div class="player-name">{player.name}</div>
+                  {#if isActive}
+                    <div class="player-sub">La aruncare acum</div>
+                  {/if}
                 </div>
               </div>
 
-              <div class="player-score">{rem}</div>
+              <div class="player-metrics">
+                <div class="player-avg-item" class:up={avgState === 'up'} class:down={avgState === 'down'}>
+                  <small>meci</small>
+                  <strong>{formatAvg(matchAvgFor(player.id))}</strong>
+                </div>
+                <div class="player-avg-item">
+                  <small>general</small>
+                  <strong>{formatAvg(generalAvgFor(player.id))}</strong>
+                </div>
+              </div>
+
+              <div class="player-visit-row" class:empty={visitDarts.length === 0}>
+                {#if visitDarts.length > 0}
+                  {#each visitDarts as dart, i}
+                    <div class={`player-visit-dart filled ${dartTone(dart)}`} class:busted={dart?.busted}>
+                      <span>{dartLabel(dart)}</span>
+                    </div>
+                  {/each}
+                  {#each Array(Math.max(0, 3 - visitDarts.length)) as _, i}
+                    <div class="player-visit-dart placeholder">
+                      <span>D{visitDarts.length + i + 1}</span>
+                    </div>
+                  {/each}
+                {:else}
+                  <span class="player-visit-empty">—</span>
+                {/if}
+              </div>
+
             </div>
 
-            <div class="player-progress">
-              <div class="value-bar">
-                <div class="value-fill" style="width:{progressWidth(player.id)}%; background:{player.color}"></div>
-              </div>
-              <div class="player-footer">
-                <span>{progressWidth(player.id).toFixed(0)}% din scor consumat</span>
-                <span>
-                  {player.legs_won} / {matchState?.legs_to_win ?? 1} manșe
-                  {#if multiLegMatch && player.best_finish > 1}
-                    · Finish {player.best_finish}
-                  {/if}
-                </span>
+            <div class="player-score-block">
+              <div class="player-rank">{isActive ? 'LIVE' : `LOC ${remainingRank}`}</div>
+              <div class="player-score">{entry.remaining}</div>
+              <div class="player-score-label">rămas</div>
+              
+              <div class="player-meta-chip">
+                <span>{player.legs_won} / {matchState?.legs_to_win ?? 1} manșe</span>
+                {#if multiLegMatch && player.best_finish > 1}
+                  <span class="meta-sep">·</span>
+                  <span>Finish {player.best_finish}</span>
+                {/if}
               </div>
             </div>
           </article>
@@ -488,7 +568,6 @@
   .topbar-right {
     display: flex;
     align-items: center;
-    gap: 12px;
     justify-content: flex-end;
   }
 
@@ -535,49 +614,60 @@
     color: #fff1c2;
   }
 
-  .next-player-chip {
+  .spotlight-next {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    padding: 0.55rem 0.8rem;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    width: fit-content;
+    max-width: 100%;
+    opacity: 0.55;
   }
 
-  .next-player-label {
+  .spotlight-next span {
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-size: 0.64rem;
-    font-weight: 800;
+    letter-spacing: 0.1em;
+    font-size: 0.58rem;
+    font-weight: 700;
     color: #9ab2d5;
   }
 
-  .next-player-main {
+  .spotlight-next-group {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .spotlight-next-main {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     color: #dfeaf8;
+    min-width: 0;
   }
 
-  .next-player-main strong {
-    font-size: 0.92rem;
+  .spotlight-next-main strong {
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .next-player-avatar {
-    width: 34px;
-    height: 34px;
+  .spotlight-next-avatar {
+    width: 22px;
+    height: 22px;
     border-radius: 999px;
     overflow: hidden;
     display: grid;
     place-items: center;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
-    font-size: 0.88rem;
+    font-size: 0.6rem;
     font-weight: 800;
   }
 
-  .next-player-avatar img {
+  .spotlight-next-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -685,6 +775,7 @@
     border-radius: 24px;
     min-width: 0;
     max-width: 100%;
+    min-height: 188px;
     padding: 18px 16px;
     display: flex;
     flex-direction: column;
@@ -704,13 +795,16 @@
   .score-value {
     margin-top: 0.45rem;
     max-width: 100%;
-    font-size: clamp(3.8rem, 6.2vw, 5.8rem);
-    line-height: 0.9;
+    font-size: clamp(3.4rem, 5.2vw, 5rem);
+    line-height: 1;
     font-weight: 800;
     color: var(--accent);
     text-shadow: 0 0 28px color-mix(in srgb, var(--accent) 40%, transparent);
     font-variant-numeric: tabular-nums;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    letter-spacing: -0.03em;
   }
 
   .score-note {
@@ -791,9 +885,10 @@
     min-height: 98px;
     border-radius: 18px;
     padding: 14px 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    justify-items: center;
+    align-items: center;
     align-items: center;
     gap: 8px;
     text-align: center;
@@ -802,7 +897,16 @@
     box-shadow: none;
   }
 
-  .dart-card.segment-1-5 {
+  .dart-slot-label {
+    color: #89a1c4;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .dart-card.segment-1-5,
+  .player-visit-dart.segment-1-5 {
     --segment-border: rgba(255, 92, 145, 0.44);
     --segment-top: rgba(255, 92, 145, 0.18);
     --segment-fill-top: rgba(255, 92, 145, 0.46);
@@ -811,7 +915,8 @@
     --segment-glow: rgba(255, 92, 145, 0.34);
   }
 
-  .dart-card.segment-6-10 {
+  .dart-card.segment-6-10,
+  .player-visit-dart.segment-6-10 {
     --segment-border: rgba(180, 119, 255, 0.44);
     --segment-top: rgba(180, 119, 255, 0.18);
     --segment-fill-top: rgba(180, 119, 255, 0.46);
@@ -820,7 +925,8 @@
     --segment-glow: rgba(180, 119, 255, 0.36);
   }
 
-  .dart-card.segment-11-15 {
+  .dart-card.segment-11-15,
+  .player-visit-dart.segment-11-15 {
     --segment-border: rgba(255, 181, 70, 0.46);
     --segment-top: rgba(255, 181, 70, 0.18);
     --segment-fill-top: rgba(255, 181, 70, 0.48);
@@ -829,7 +935,8 @@
     --segment-glow: rgba(255, 181, 70, 0.36);
   }
 
-  .dart-card.segment-16-20 {
+  .dart-card.segment-16-20,
+  .player-visit-dart.segment-16-20 {
     --segment-border: rgba(255, 219, 77, 0.5);
     --segment-top: rgba(255, 219, 77, 0.22);
     --segment-fill-top: rgba(255, 219, 77, 0.56);
@@ -838,7 +945,8 @@
     --segment-glow: rgba(255, 219, 77, 0.42);
   }
 
-  .dart-card.segment-bull {
+  .dart-card.segment-bull,
+  .player-visit-dart.segment-bull {
     --segment-border: rgba(255, 239, 165, 0.56);
     --segment-top: rgba(255, 239, 165, 0.22);
     --segment-fill-top: rgba(255, 239, 165, 0.56);
@@ -852,17 +960,20 @@
     background: linear-gradient(180deg, var(--segment-top), rgba(255, 255, 255, 0.02));
   }
 
-  .dart-card.mult-double {
+  .dart-card.mult-double,
+  .player-visit-dart.mult-double {
     --mult-ring: rgba(72, 219, 251, 0.96);
     --mult-glow: rgba(72, 219, 251, 0.5);
   }
 
-  .dart-card.mult-triple {
+  .dart-card.mult-triple,
+  .player-visit-dart.mult-triple {
     --mult-ring: rgba(121, 255, 126, 0.98);
     --mult-glow: rgba(121, 255, 126, 0.54);
   }
 
-  .dart-card.mult-bull {
+  .dart-card.mult-bull,
+  .player-visit-dart.mult-bull {
     --mult-ring: rgba(255, 251, 233, 0.98);
     --mult-glow: rgba(255, 240, 179, 0.56);
   }
@@ -896,6 +1007,7 @@
     font-size: 1.4rem;
     font-weight: 800;
     color: #fff;
+    align-self: center;
   }
 
   .dart-card[class*='segment-'] .dart-name {
@@ -923,12 +1035,84 @@
     font-weight: 700;
   }
 
+  .current-badge-panel {
+    margin-top: 0.9rem;
+    padding: 0.95rem 1rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .current-badge-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .current-badge-label {
+    color: #8fa7cb;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .current-badge-copy strong {
+    color: #f1f6ff;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .current-badge-list {
+    flex: 1 1 auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.7rem 1rem;
+  }
+
+  .current-badge-list :global(.badge-token) {
+    gap: 0.7rem;
+  }
+
+  .current-badge-list :global(.badge-art-shell) {
+    width: 2.65rem;
+    height: 2.65rem;
+  }
+
+  .current-badge-list :global(.badge-label) {
+    font-size: 0.86rem;
+  }
+
+  .current-badge-list :global(.badge-count) {
+    font-size: 0.78rem;
+  }
+
   .previous-player {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     color: #dbe6f8;
     font-weight: 700;
+  }
+
+  .previous-remaining {
+    color: #93abcf;
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  .previous-remaining strong {
+    color: #ffd166;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: 1rem;
   }
 
   .tiny-dot {
@@ -1063,30 +1247,7 @@
     padding: 22px;
     display: flex;
     flex-direction: column;
-  }
-
-  .live-badge-row {
-    margin-top: 0.45rem;
-  }
-
-  .live-badge-row :global(.badge-token) {
-    padding: 0;
-    min-height: 0;
-    gap: 0.42rem;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .live-badge-row :global(.badge-art-shell) {
-    background: transparent;
-    width: 2rem;
-    height: 2rem;
-  }
-
-  .live-badge-row :global(.badge-art) {
-    filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.22));
+    overflow: hidden;
   }
 
   .scoreboard-title {
@@ -1097,44 +1258,70 @@
   }
 
   .scoreboard-list {
-    margin-top: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
     min-height: 0;
-    overflow: auto;
+    flex: 1 1 auto;
+    overflow: hidden;
+    align-content: start;
   }
 
   .player-card {
     border-radius: 22px;
-    padding: 16px;
+    padding: 18px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
+    height: auto;
   }
 
   .player-card.active {
     border-color: color-mix(in srgb, var(--c) 42%, rgba(255, 255, 255, 0.08));
     background: linear-gradient(135deg, color-mix(in srgb, var(--c) 16%, #0f1b2f), rgba(255, 255, 255, 0.03));
     box-shadow: 0 16px 36px color-mix(in srgb, var(--c) 18%, transparent);
+    min-height: 138px;
+    padding-bottom: 18px;
+  }
+
+  .player-card.active .player-body {
+    gap: 10px;
+  }
+
+  .player-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: start;
+    min-height: 92px;
+  }
+
+  .player-body {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto auto auto auto;
+    gap: 8px;
   }
 
   .player-main {
     display: grid;
-    grid-template-columns: 52px 68px minmax(0, 1fr) auto;
-    gap: 12px;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 10px;
     align-items: center;
   }
 
   .player-rank {
-    height: 38px;
+    min-height: 32px;
+    padding: 0.22rem 0.6rem;
     border-radius: 12px;
-    display: grid;
+    display: inline-grid;
     place-items: center;
     background: rgba(255, 255, 255, 0.05);
     color: #a8bddb;
     font-size: 0.74rem;
     font-weight: 800;
     letter-spacing: 0.08em;
+    justify-self: end;
   }
 
   .player-card.active .player-rank {
@@ -1143,24 +1330,28 @@
   }
 
   .player-avatar {
-    width: 68px;
-    height: 68px;
-    border-radius: 16px;
+    width: 52px;
+    height: 52px;
+    border-radius: 13px;
     overflow: hidden;
     background: color-mix(in srgb, var(--c) 78%, #1b2d48);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
+    font-size: 1.2rem;
     font-weight: 800;
   }
 
   .player-copy {
     min-width: 0;
+    display: grid;
+    grid-template-rows: auto auto;
+    align-content: start;
+    row-gap: 6px;
   }
 
   .player-name {
-    font-size: 1.2rem;
+    font-size: 1.08rem;
     font-weight: 700;
     color: #fff;
     white-space: nowrap;
@@ -1169,18 +1360,17 @@
   }
 
   .player-sub {
-    margin-top: 0.2rem;
     color: #97accb;
-    font-size: 0.84rem;
+    font-size: 0.74rem;
     font-weight: 700;
   }
 
   .player-avgs {
-    margin-top: 0.35rem;
     display: grid;
-    grid-template-columns: auto auto;
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
     align-items: end;
+    min-height: 34px;
   }
 
   .player-avg-item small {
@@ -1215,41 +1405,301 @@
     text-shadow: 0 0 18px rgba(255, 141, 141, 0.28);
   }
 
-  .player-avg-item span {
+  .player-avg-item span,
+  .player-avg-item strong {
     color: #a6b8d3;
     font-size: 0.9rem;
     font-weight: 700;
   }
 
+  .player-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+    min-height: 28px;
+  }
+
+  .player-visit-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    min-height: 30px;
+    align-items: stretch;
+  }
+
+  .player-visit-row.empty {
+    grid-template-columns: 1fr;
+  }
+
+  .player-visit-dart {
+    min-width: 0;
+    min-height: 30px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #dfeaf8;
+    text-transform: uppercase;
+  }
+
+  .player-visit-dart.filled.segment-1-5,
+  .player-visit-dart.filled.segment-6-10,
+  .player-visit-dart.filled.segment-11-15,
+  .player-visit-dart.filled.segment-16-20,
+  .player-visit-dart.filled.segment-bull {
+    border-color: var(--segment-border);
+    background: linear-gradient(180deg, var(--segment-fill-top), var(--segment-fill-bottom));
+    box-shadow: 0 0 0 2px var(--mult-ring), 0 0 16px var(--mult-glow);
+    color: var(--segment-name);
+  }
+
+  .player-visit-dart.busted {
+    background: rgba(255, 107, 107, 0.12);
+    border-color: rgba(255, 107, 107, 0.18);
+    color: #ff9a9a;
+  }
+
+  .player-visit-dart.placeholder {
+    color: #7489ab;
+    border-style: dashed;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .player-visit-empty {
+    align-self: center;
+    color: #7085a7;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+  }
+
   .player-score {
     min-width: 88px;
-    text-align: right;
     font-size: 2.2rem;
     font-weight: 800;
     color: #fff;
   }
 
-  .player-progress {
-    margin-top: 12px;
+  .player-score-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    justify-content: center;
+    min-width: 112px;
+    gap: 4px;
   }
 
-  .value-bar {
-    height: 10px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    overflow: hidden;
-  }
-
-  .value-fill {
-    height: 100%;
-    border-radius: inherit;
+  .player-score-label {
+    color: #8fa7cb;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   .player-footer {
-    margin-top: 10px;
+    min-height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .player-meta-chip {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+    padding: 0;
     color: #a4b7d4;
-    font-size: 0.76rem;
+    font-size: 0.68rem;
     font-weight: 800;
+    line-height: 1.2;
+    text-align: right;
+  }
+
+  .scoreboard.compact {
+    padding: 18px;
+  }
+
+  .scoreboard.compact .scoreboard-list {
+    margin-top: 12px;
+    gap: 12px;
+  }
+
+  .player-card.compact {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .player-card.compact .player-main {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .player-card:not(.active) {
+    min-height: 78px;
+    padding: 10px 16px;
+  }
+
+  .player-card:not(.active) .player-score-block {
+    gap: 0px;
+  }
+
+  .player-card:not(.active) .player-body {
+    gap: 4px;
+  }
+
+  .player-card:not(.active) .player-main {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .player-card:not(.active) .player-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    font-size: 1rem;
+  }
+
+  .player-card:not(.active) .player-name {
+    font-size: 0.94rem;
+  }
+
+  .player-card:not(.active) .player-metrics {
+    min-height: 24px;
+    gap: 10px;
+  }
+
+  .player-card:not(.active) .player-avg-item small {
+    font-size: 0.56rem;
+  }
+
+  .player-card:not(.active) .player-avg-item strong {
+    font-size: 0.9rem;
+  }
+
+  .player-card:not(.active) .player-visit-row {
+    min-height: 22px;
+    gap: 5px;
+  }
+
+  .player-card:not(.active) .player-visit-dart {
+    min-height: 22px;
+    border-radius: 8px;
+    font-size: 0.6rem;
+    padding: 0 4px;
+  }
+
+  .player-card:not(.active) .player-footer {
+    min-height: 10px;
+  }
+
+  .player-card:not(.active) .player-meta-chip {
+    font-size: 0.6rem;
+  }
+
+  .player-card:not(.active) .player-score {
+    font-size: 1.8rem;
+    min-width: 72px;
+    line-height: 1;
+  }
+
+  .player-card:not(.active) .player-rank {
+    min-height: 26px;
+    padding: 0.14rem 0.44rem;
+    border-radius: 10px;
+    font-size: 0.64rem;
+  }
+
+  .player-card.compact .player-rank {
+    min-height: 26px;
+    padding: 0.14rem 0.42rem;
+    border-radius: 10px;
+    font-size: 0.64rem;
+  }
+
+  .player-card.compact .player-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    font-size: 1.15rem;
+  }
+
+  .player-card.compact .player-name {
+    font-size: 0.95rem;
+  }
+
+  .player-card.compact .player-sub {
+    font-size: 0.68rem;
+  }
+
+  .player-card.compact .player-avgs {
+    gap: 6px;
+    min-height: 26px;
+  }
+
+  .player-card.compact .player-avg-item small {
+    font-size: 0.5rem;
+  }
+
+  .player-card.compact .player-avg-item strong {
+    font-size: 0.8rem;
+  }
+
+  .player-card.compact .player-avg-item span {
+    font-size: 0.72rem;
+  }
+
+  .player-card.compact .player-metrics {
+    gap: 8px;
+    min-height: 26px;
+  }
+
+  .player-card.compact .player-visit-row {
+    gap: 5px;
+    min-height: 28px;
+  }
+
+  .player-card.compact .player-visit-dart {
+    min-height: 28px;
+    border-radius: 8px;
+    font-size: 0.62rem;
+    padding: 0 4px;
+  }
+
+  .player-card.compact .player-visit-empty {
+    font-size: 0.68rem;
+  }
+
+  .player-card.compact .player-footer {
+    min-height: 14px;
+  }
+
+  .player-card.compact .player-score {
+    min-width: 62px;
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  .player-card.compact .player-score-label {
+    font-size: 0.62rem;
+  }
+
+  .player-card.compact .player-meta-chip {
+    font-size: 0.64rem;
+  }
+
+  .scoreboard.grid .scoreboard-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
 </style>

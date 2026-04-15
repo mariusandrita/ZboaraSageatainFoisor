@@ -38,6 +38,14 @@
       'bigDouble':    { label: 'D+',        sub: 'DUBLĂ GREA!',                        color: '#5bd5fc', bg: 'rgba(91,213,252,0.13)'  },
       'bigTriple':    { label: 'T+',        sub: 'TRIPLĂ GREA!',                       color: '#ffd166', bg: 'rgba(255,209,102,0.13)' },
       'overAvg':      { label: String(v),   sub: 'PESTE MEDIA TA!',                    color: '#7ee7b7', bg: 'rgba(126,231,183,0.14)' },
+      'beatGeneral':  { label: 'AVG+',      sub: 'PESTE MEDIA GENERALĂ!',              desc: 'Ai depășit media ta generală din meciurile terminate. Asta chiar contează.', color: '#84cc16', bg: 'rgba(132,204,22,0.15)' },
+      'nineDarter':   { label: '9',         sub: 'NINE-DARTER!',                       desc: 'Perfecțiune absolută. 501 în 9 săgeți.', color: '#ffd700', bg: 'rgba(255,215,0,0.16)' },
+      'motown':       { label: '44',        sub: 'MOTOWN!',                            desc: 'Checkout pe 44. The Four Tops aprobă.', color: '#a78bfa', bg: 'rgba(167,139,250,0.14)' },
+      'champagneShower': { label: '🍾',     sub: 'ȘAMPANIA A RĂMAS ÎNCHISĂ!',          desc: 'Bust aproape de finish. Era aproape momentul de sărbătoare.', color: '#fbbf24', bg: 'rgba(251,191,36,0.14)' },
+      'circleIt':     { label: String(v),   sub: 'CIRCLE IT!',                         desc: 'Ai ținut toate săgețile pe tablă, dar totalul a rămas microscopic.', color: '#2dd4bf', bg: 'rgba(45,212,191,0.13)' },
+      'route66':      { label: '66',        sub: 'ROUTE 66!',                          desc: 'Vizită clasică de 66. Merge direct în folclorul de darts.', color: '#fb923c', bg: 'rgba(251,146,60,0.14)' },
+      'allTheFives':  { label: '55',        sub: 'ALL THE FIVES!',                     desc: 'Toate drumurile duc la 55. Vizită cu număr de afiș.', color: '#4ade80', bg: 'rgba(74,222,128,0.13)' },
+      'twoFatLadies': { label: '88',        sub: 'TWO FAT LADIES!',                    desc: '88 curat. Call clasic, perfect de strigat cu voce tare.', color: '#c084fc', bg: 'rgba(192,132,252,0.14)' },
       // ── Funny Awards ──────────────────────────────────────────────────────
       'shanghai':     { label: 'SH',         sub: 'SHANGHAI!',                         desc: 'Single, dublă și triplă pe același număr. Vizită de mare clasă.', color: '#ffb703', bg: 'rgba(255,183,3,0.14)' },
       'blackHat':     { label: '🎩',         sub: 'BLACK HAT!',                        desc: 'Trei bull-uri într-o singură tură. Asta e deja legendă de foișor.', color: '#fdf0d5', bg: 'rgba(253,240,213,0.16)' },
@@ -51,7 +59,13 @@
       'matematician': { label: '?',          sub: 'ERROR 404 — CALCUL GREȘIT! 🤯',     desc: 'Ai făcut bust când scorul rămas era foarte mic. Matematica n-a ieșit.', color: '#e63946', bg: 'rgba(230,57,70,0.18)'   },
       'centrul':      { label: 'BULL',       sub: 'DAR NU ERA MOMENTUL... 🎉',          desc: 'Bullseye frumos, dar nu era lovitura de închidere.', color: '#4caf50', bg: 'rgba(76,175,80,0.12)'   },
     };
-    return map[k] ?? map['180'];
+    return map[k] ?? {
+      label: String(v || awardLabel(k) || '?'),
+      sub: (awardLabel(k) || 'BADGE NOU').toUpperCase(),
+      desc: 'Badge nou de meci live.',
+      color: '#ffd166',
+      bg: 'rgba(255,209,102,0.13)',
+    };
   }
 
   function handleBadgeError() {
@@ -137,10 +151,10 @@
     text-align: center;
     position: relative;
     z-index: 2;
-    width: min(78vw, 920px);
-    max-height: min(84vh, 900px);
-    padding: 1.6rem 2rem;
-    border-radius: 28px;
+    width: min(84vw, 1180px);
+    max-height: min(90vh, 980px);
+    padding: 2rem 2.6rem 2.2rem;
+    border-radius: 34px;
     background: rgba(4, 8, 15, 0.54);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
@@ -176,11 +190,11 @@
   }
 
   .player-photo-wrap {
-    width: 92px;
-    height: 92px;
-    margin: 0 auto 0.8rem;
-    padding: 6px;
-    border-radius: 24px;
+    width: 138px;
+    height: 138px;
+    margin: 0 auto 1rem;
+    padding: 8px;
+    border-radius: 32px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.32);
@@ -191,17 +205,17 @@
     height: 100%;
     display: block;
     object-fit: cover;
-    border-radius: 22px;
+    border-radius: 28px;
   }
 
   .badge-img-wrap {
-    width: clamp(104px, 14vw, 152px);
-    height: clamp(104px, 14vw, 152px);
-    margin: 0 auto 0.8rem;
-    border-radius: 28px;
+    width: clamp(160px, 22vw, 260px);
+    height: clamp(160px, 22vw, 260px);
+    margin: 0 auto 1rem;
+    border-radius: 40px;
     background: transparent;
     border: none;
-    box-shadow: 0 0 42px color-mix(in srgb, var(--glow, #fff) 38%, transparent), 0 18px 40px rgba(0,0,0,0.34);
+    box-shadow: 0 0 56px color-mix(in srgb, var(--glow, #fff) 42%, transparent), 0 24px 56px rgba(0,0,0,0.36);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -213,7 +227,7 @@
     height: 100%;
     object-fit: contain;
     display: block;
-    filter: drop-shadow(0 14px 24px rgba(0,0,0,0.28));
+    filter: drop-shadow(0 18px 30px rgba(0,0,0,0.32));
   }
 
   @keyframes badge-drop {

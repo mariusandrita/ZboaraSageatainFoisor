@@ -44,11 +44,19 @@ export function openDb(dbPath = process.env.DB_PATH || DEFAULT_DB_PATH) {
   try { _db.exec('ALTER TABLE matches ADD COLUMN source_payload TEXT'); } catch {}
   try { _db.exec('ALTER TABLE match_players ADD COLUMN general_avg_start REAL NOT NULL DEFAULT 0'); } catch {}
   try { _db.exec('ALTER TABLE match_players ADD COLUMN sets_won INTEGER NOT NULL DEFAULT 0'); } catch {}
+  try { _db.exec('ALTER TABLE match_players ADD COLUMN eliminated_at TEXT'); } catch {}
   try { _db.exec('ALTER TABLE legs ADD COLUMN set_number INTEGER NOT NULL DEFAULT 1'); } catch {}
   try { _db.exec('CREATE UNIQUE INDEX idx_matches_public_code ON matches(public_code)'); } catch {}
   try { _db.exec('CREATE UNIQUE INDEX idx_matches_source_ref ON matches(source_type, source_ref)'); } catch {}
   try { _db.exec('CREATE INDEX idx_players_playable ON players(is_playable, archived_at)'); } catch {}
   try { _db.exec('CREATE INDEX idx_players_stats_visible ON players(stats_visible, archived_at)'); } catch {}
+  // Performance indexes for lobby stats aggregation
+  try { _db.exec('CREATE INDEX idx_matches_status ON matches(status)'); } catch {}
+  try { _db.exec('CREATE INDEX idx_legs_match ON legs(match_id)'); } catch {}
+  try { _db.exec('CREATE INDEX idx_legs_winner ON legs(winner_id, match_id)'); } catch {}
+  try { _db.exec('CREATE INDEX idx_darts_leg_player ON darts(leg_id, player_id, turn_number, busted, score_value)'); } catch {}
+  try { _db.exec('CREATE INDEX idx_match_players_player ON match_players(player_id, match_id)'); } catch {}
+  try { _db.exec('CREATE INDEX idx_match_players_match ON match_players(match_id, player_id)'); } catch {}
   _db.exec(`
     CREATE TABLE IF NOT EXISTS awards (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

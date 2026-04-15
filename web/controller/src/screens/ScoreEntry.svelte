@@ -14,6 +14,25 @@
   let preferredVoiceUri = '';
   let availableVoices = [];
   let currentUtterance = null;
+  const REQUEST_TIMEOUT_MS = 6000;
+
+  async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  function formatRequestError(error, fallback) {
+    if (error?.name === 'AbortError') {
+      return 'Conexiunea a întârziat prea mult. Încearcă din nou.';
+    }
+    return error?.message || fallback;
+  }
 
   // Safety net: if turnState is missing on mount, re-fetch from server
   onMount(async () => {
@@ -46,7 +65,7 @@
     lastAction = segment;
     apiError = '';
     try {
-      const res = await fetch(`/api/matches/${$match.id}/darts`, {
+      const res = await fetchWithTimeout(`/api/matches/${$match.id}/darts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ segment, multiplier: $multiplier }),
@@ -60,7 +79,7 @@
         turnState.set(nextTurnState);
         apiError = '';
       }
-    } catch(e) { apiError = e.message; }
+    } catch(e) { apiError = formatRequestError(e, 'Eroare la trimiterea aruncării'); }
     finally { submitting = false; lastAction = null; multiplier.set(1); }
   }
 
@@ -69,10 +88,10 @@
     submitting = true;
     apiError = '';
     try {
-      const res = await fetch(`/api/matches/${$match.id}/undo`, { method: 'POST' });
+      const res = await fetchWithTimeout(`/api/matches/${$match.id}/undo`, { method: 'POST' });
       if (res.ok) { turnState.set(await res.json()); }
       else { const d = await res.json(); apiError = d.error?.message ?? 'Undo failed'; }
-    } catch(e) { apiError = e.message; }
+    } catch(e) { apiError = formatRequestError(e, 'Undo failed'); }
     finally { submitting = false; multiplier.set(1); }
   }
 
@@ -87,10 +106,44 @@
     dispatch('finish');
   }
 
+  async function eliminatePlayer(playerId) {
+    if (!$match?.id || submitting) return;
+    const player = $match.players?.find((entry) => entry.id === playerId);
+    if (!player) return;
+    const confirmed = typeof window === 'undefined'
+      ? true
+      : window.confirm(`Îl elimini pe ${player.name} din meci? Săgețile, badge-urile și stats-urile rămân salvate.`);
+    if (!confirmed) return;
+
+    submitting = true;
+    apiError = '';
+    try {
+      const res = await fetchWithTimeout(`/api/matches/${$match.id}/eliminate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        apiError = d.error?.message ?? 'Eliminarea a eșuat';
+      } else {
+        const full = await res.json();
+        match.set(full);
+        turnState.set(full.turnState ?? null);
+      }
+    } catch (e) {
+      apiError = formatRequestError(e, 'Eliminarea a eșuat');
+    } finally {
+      submitting = false;
+    }
+  }
+
   $: currentTurnTotal = $turnState?.turn?.reduce((s, d) => s + d.score_value, 0) ?? 0;
   $: dartsInTurn = $turnState?.turn?.length ?? 0;
   $: isBusted = $turnState?.busted ?? false;
   $: hint = $turnState?.checkoutHint ?? null;
+  $: activePlayers = ($match?.players ?? []).filter((player) => !player.eliminated_at);
+  $: removablePlayers = activePlayers.filter((player) => player.id !== $currentPlayer?.id);
   $: doubleOutActive = $match?.double_out === 1;
   $: doubleOutNote = doubleOutActive
     ? 'Double Out activ: trebuie să închizi pe dublă. Dacă ajungi la 1 sau la 0 fără dublă, tura devine BUST și scorul revine.'
@@ -249,6 +302,11 @@
       <span class="player-name">{$currentPlayer?.name ?? '—'}</span>
     </div>
     <div class="header-actions">
+      {#if $turnState}
+        <button class="undo-top-btn" on:click={undo} disabled={submitting}>
+          ↩ Anulează
+        </button>
+      {/if}
       <button
         class="reader-toggle"
         class:active={scoreReaderEnabled}
@@ -284,7 +342,7 @@
 
     <!-- Checkout hint -->
     {#if hint && !isBusted}
-      <div class="hint">🎯 {hintLabel(hint)}</div>
+      <div class="hint">🎯 Out: {hintLabel(hint)}</div>
     {/if}
     {#if doubleOutActive}
       <div class="mode-note">{doubleOutNote}</div>
@@ -356,7 +414,7 @@
 
   <!-- Bottom actions -->
   <div class="bottom-bar">
-    <button class="undo-btn" on:click={undo} disabled={submitting || $turnState?.finished}>
+    <button class="undo-btn" on:click={undo} disabled={submitting || !$turnState}>
       ↩ Anulează
     </button>
     <div class="legs-info">
@@ -373,6 +431,20 @@
       <button class="abandon-btn" on:click={exitMatch}>Ieșire</button>
     {/if}
   </div>
+
+  {#if !$turnState?.finished && removablePlayers.length > 0}
+    <div class="eliminate-bar">
+      <div class="eliminate-title">Elimină jucător</div>
+      <div class="eliminate-list">
+        {#each removablePlayers as player}
+          <button class="eliminate-btn" on:click={() => eliminatePlayer(player.id)} disabled={submitting}>
+            <span class="eliminate-dot" style="background:{player.color}"></span>
+            <span>{player.name}</span>
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -406,6 +478,17 @@
     background: rgba(76,175,80,0.12);
     border-color: rgba(76,175,80,0.26);
   }
+  .undo-top-btn {
+    border: 1px solid rgba(230,57,70,0.28);
+    background: rgba(230,57,70,0.14);
+    color: #ff9099;
+    font-size: 0.76rem;
+    font-weight: 800;
+    border-radius: 999px;
+    padding: 0.45rem 0.8rem;
+    cursor: pointer;
+  }
+  .undo-top-btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .abort-btn { background: none; border: none; color: #666; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; }
   .api-error {
     width: 100%; background: #3a1a1e; border: none; color: #e63946;
@@ -524,6 +607,52 @@
     display: flex; align-items: center; justify-content: space-between;
     padding: 0.75rem 1rem; background: #12122a;
     border-top: 1px solid #2a2a4a; margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 9;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .eliminate-bar {
+    padding: 0.75rem 1rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(10, 10, 26, 0.94);
+  }
+
+  .eliminate-title {
+    color: #ff9099;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .eliminate-list {
+    margin-top: 0.55rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .eliminate-btn {
+    border: 1px solid rgba(230,57,70,0.24);
+    background: rgba(230,57,70,0.1);
+    color: #ffd5d9;
+    border-radius: 999px;
+    padding: 0.55rem 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .eliminate-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
   .undo-btn {
     background: #3a1a1e; border: none; color: #e63946; font-weight: 700;

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775821579615,
+  "lastScanned": 1775928709527,
   "projectRoot": "/Users/mariusandrita/Dockers/DartsLeague",
   "techStack": {
     "languages": [
@@ -57,21 +57,21 @@
     "ProDarts": {
       "path": "ProDarts",
       "purpose": null,
-      "fileCount": 25,
-      "lastAccessed": 1775821579600,
+      "fileCount": 20,
+      "lastAccessed": 1775928709513,
       "keyFiles": [
         "all_players.json",
-        "base.apk",
-        "crack.hash",
         "main.dart.js",
-        "prodarts_backup.ab"
+        "prodarts_backup.ab",
+        "raw_AroundTheClockGame.json",
+        "raw_CheckoutTraining.json"
       ]
     },
     "backups": {
       "path": "backups",
       "purpose": null,
       "fileCount": 9,
-      "lastAccessed": 1775821579601,
+      "lastAccessed": 1775928709515,
       "keyFiles": [
         "dartsleague-before-awards-rebuild-20260410-012254.db",
         "dartsleague-before-awards-rebuild-20260410-012254.db-shm",
@@ -83,21 +83,21 @@
     "badgeuri": {
       "path": "badgeuri",
       "purpose": null,
-      "fileCount": 7,
-      "lastAccessed": 1775821579603,
+      "fileCount": 33,
+      "lastAccessed": 1775928709515,
       "keyFiles": [
-        "Gemini_Generated_Image_divjjhdivjjhdivj.png",
-        "Gemini_Generated_Image_nrud1cnrud1cnrud.png",
-        "english breakfast.png",
-        "shanhai.png",
-        "sniper.png"
+        "100 finish.png",
+        "100+.png",
+        "140+.png",
+        "3x0.png",
+        "44.png"
       ]
     },
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 3,
-      "lastAccessed": 1775821579603,
+      "lastAccessed": 1775928709516,
       "keyFiles": [
         "ARCHITECTURE.md",
         "HARDWARE.md",
@@ -108,14 +108,14 @@
       "path": "ops",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775821579603,
+      "lastAccessed": 1775928709516,
       "keyFiles": []
     },
     "server": {
       "path": "server",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1775821579604,
+      "lastAccessed": 1775928709516,
       "keyFiles": [
         "dartsleague.db",
         "dartsleague.db-shm",
@@ -127,14 +127,14 @@
       "path": "web",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775821579604,
+      "lastAccessed": 1775928709516,
       "keyFiles": []
     },
     "ops/scripts": {
       "path": "ops/scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 2,
-      "lastAccessed": 1775821579605,
+      "lastAccessed": 1775928709516,
       "keyFiles": [
         "backup.sh",
         "install.sh"
@@ -144,21 +144,21 @@
       "path": "server/node_modules",
       "purpose": "Dependencies",
       "fileCount": 0,
-      "lastAccessed": 1775821579606,
+      "lastAccessed": 1775928709516,
       "keyFiles": []
     },
     "server/public": {
       "path": "server/public",
       "purpose": "Public files",
       "fileCount": 1,
-      "lastAccessed": 1775821579606,
+      "lastAccessed": 1775928709516,
       "keyFiles": []
     },
     "server/src": {
       "path": "server/src",
       "purpose": "Source code",
       "fileCount": 2,
-      "lastAccessed": 1775821579606,
+      "lastAccessed": 1775928709517,
       "keyFiles": [
         "catalog.js",
         "index.js"
@@ -168,14 +168,14 @@
   "hotPaths": [
     {
       "path": "server/src/stats/aggregate.js",
-      "accessCount": 60,
-      "lastAccessed": 1775824509671,
+      "accessCount": 73,
+      "lastAccessed": 1775929317178,
       "type": "file"
     },
     {
       "path": "server/src/routes/matches.js",
-      "accessCount": 49,
-      "lastAccessed": 1775805238499,
+      "accessCount": 56,
+      "lastAccessed": 1775945896088,
       "type": "file"
     },
     {
@@ -186,8 +186,14 @@
     },
     {
       "path": "web/controller/src/screens/Players.svelte",
+      "accessCount": 34,
+      "lastAccessed": 1775927024220,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/screens/NewMatch.svelte",
       "accessCount": 32,
-      "lastAccessed": 1775811608959,
+      "lastAccessed": 1775931368891,
       "type": "file"
     },
     {
@@ -197,33 +203,27 @@
       "type": "file"
     },
     {
-      "path": "web/controller/src/screens/NewMatch.svelte",
-      "accessCount": 23,
-      "lastAccessed": 1775811600742,
-      "type": "file"
-    },
-    {
       "path": "web/controller/src/screens/Home.svelte",
-      "accessCount": 20,
-      "lastAccessed": 1775811600421,
+      "accessCount": 23,
+      "lastAccessed": 1775946198844,
       "type": "file"
     },
     {
       "path": "server/src/index.js",
+      "accessCount": 20,
+      "lastAccessed": 1775828284371,
+      "type": "file"
+    },
+    {
+      "path": "web/controller/src/App.svelte",
       "accessCount": 19,
-      "lastAccessed": 1775822146226,
+      "lastAccessed": 1775927987113,
       "type": "file"
     },
     {
       "path": "web/tv/src/App.svelte",
       "accessCount": 18,
       "lastAccessed": 1775810666330,
-      "type": "file"
-    },
-    {
-      "path": "web/controller/src/App.svelte",
-      "accessCount": 18,
-      "lastAccessed": 1775811600222,
       "type": "file"
     },
     {
@@ -239,16 +239,22 @@
       "type": "file"
     },
     {
+      "path": "",
+      "accessCount": 17,
+      "lastAccessed": 1775927927160,
+      "type": "directory"
+    },
+    {
       "path": "web/tv/src/dartboard/Dartboard.svelte",
       "accessCount": 16,
       "lastAccessed": 1775626934771,
       "type": "file"
     },
     {
-      "path": "",
-      "accessCount": 16,
-      "lastAccessed": 1775769125486,
-      "type": "directory"
+      "path": "server/src/realtime/room.js",
+      "accessCount": 14,
+      "lastAccessed": 1775930858878,
+      "type": "file"
     },
     {
       "path": "server/src/routes/stats.js",
@@ -263,15 +269,15 @@
       "type": "file"
     },
     {
-      "path": "server/src/routes/players.js",
-      "accessCount": 10,
-      "lastAccessed": 1775648046824,
+      "path": "web/shared/ws-client.js",
+      "accessCount": 11,
+      "lastAccessed": 1775927974174,
       "type": "file"
     },
     {
-      "path": "web/shared/ws-client.js",
+      "path": "server/src/routes/players.js",
       "accessCount": 10,
-      "lastAccessed": 1775766049537,
+      "lastAccessed": 1775648046824,
       "type": "file"
     },
     {
@@ -281,9 +287,9 @@
       "type": "file"
     },
     {
-      "path": "server/src/realtime/room.js",
-      "accessCount": 8,
-      "lastAccessed": 1775652245917,
+      "path": "server/src/db/schema.sql",
+      "accessCount": 9,
+      "lastAccessed": 1775928811238,
       "type": "file"
     },
     {
@@ -305,15 +311,9 @@
       "type": "file"
     },
     {
-      "path": "server/src/db/schema.sql",
-      "accessCount": 7,
-      "lastAccessed": 1775824448597,
-      "type": "file"
-    },
-    {
       "path": "server/src/db/connection.js",
-      "accessCount": 5,
-      "lastAccessed": 1775626916011,
+      "accessCount": 7,
+      "lastAccessed": 1775928828617,
       "type": "file"
     },
     {

@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS match_players (
   legs_won   INTEGER NOT NULL DEFAULT 0,
   sets_won   INTEGER NOT NULL DEFAULT 0,
   general_avg_start REAL NOT NULL DEFAULT 0,
+  eliminated_at TEXT,
   PRIMARY KEY (match_id, player_id)
 );
 

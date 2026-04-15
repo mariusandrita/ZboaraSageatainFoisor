@@ -21,6 +21,8 @@ export function createWsClient() {
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
+    timeout: 10000,
+    transports: ['websocket', 'polling'],
   });
 
   // ── Connection events ─────────────────────────────────────────────────
