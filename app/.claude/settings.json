@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash([ -f \".claude/CLAUDE.md\" ])",
+      "Bash([ -f \"$HOME/.claude/CLAUDE.md\" ])",
+      "Bash(bash \"/Users/mariusandrita/.claude/plugins/marketplaces/omc/scripts/setup-claude-md.sh\" global)",
+      "Bash(wc -l /Users/mariusandrita/Dockers/DartsLeague/PLAN.md /Users/mariusandrita/Dockers/DartsLeague/docs/*.md /Users/mariusandrita/Dockers/DartsLeague/docs/agents/*.md)",
+      "Bash(find /Users/mariusandrita/Dockers/DartsLeague -name \"vite.config.js\" -exec cat {} \\\\;)",
+      "mcp__stitch__list_screens",
+      "Bash(npm install:*)",
+      "Bash(npx vitest:*)",
+      "Bash(node src/index.js)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(curl -s http://localhost:3000/api/players)",
+      "Bash(pkill -f \"node.*server/src/index\")",
+      "Bash(node server/src/index.js)",
+      "Bash(curl -s http://localhost:3000/api/matches?status=live)",
+      "Bash(curl -s \"http://localhost:3000/api/matches\")",
+      "Bash(curl -s \"http://localhost:3000/api/matches/4\")",
+      "Bash(curl -s -X POST \"http://localhost:3000/api/matches/4/darts\" -H \"Content-Type: application/json\" -d '{\"segment\":20,\"multiplier\":1}')",
+      "Bash(node -e ':*)",
+      "Bash(ls /Users/mariusandrita/Dockers/DartsLeague/Dockerfile*)",
+      "Bash(docker run:*)",
+      "mcp__stitch__get_screen",
+      "WebFetch(domain:contribution.usercontent.google.com)",
+      "Bash(node -e \"require\\('svelte/compiler'\\); console.log\\('svelte ok'\\)\")"
+    ]
+  }
+}

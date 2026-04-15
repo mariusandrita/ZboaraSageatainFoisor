@@ -1,0 +1,19 @@
+[Unit]
+Description=DartsLeague Node.js Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/kenny/ZboaraSageata
+Environment=NODE_ENV=production
+Environment=PORT=80
+Environment=HOST=0.0.0.0
+Environment=DB_PATH=/home/kenny/ZboaraSageata/dartsleague.db
+Environment=LOG_LEVEL=info
+ExecStart=/usr/bin/node server/src/index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
