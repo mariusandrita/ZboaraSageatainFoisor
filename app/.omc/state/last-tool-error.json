@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"ssh kenny@192.168.0.69 \\\"ls /home/kenny/ZboaraSageata 2>/dev/null || echo 'Directory empty or missing'; uname -m; cat /etc/os-release | head -5\\\"\",\"description\":\"Check Pi architecture and ...",
-  "error": "Exit code 255\nPermission denied, please try again.\r\nPermission denied, please try again.\r\nkenny@192.168.0.69: Permission denied (publickey,password).\n[rerun: b2]",
-  "timestamp": "2026-04-10T13:37:03.505Z",
-  "retry_count": 1
-}

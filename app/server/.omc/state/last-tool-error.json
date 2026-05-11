@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"npx vitest run src/engine/x01.test.js 2>&1\",\"timeout\":30000,\"description\":\"Re-run engine tests after fix\"}",
-  "error": "Exit code 1\n\n RUN  v1.6.1 /Users/mariusandrita/Dockers/DartsLeague/server\n\n ❯ src/engine/x01.test.js  (50 tests | 1 failed) 7ms\n   ❯ src/engine/x01.test.js > newLeg > throws on invalid startingScore\n     → expected [Function] to throw an error\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/engine/x01.test.js > newLeg > throws on invalid startingScore\nAssertionError: expected [Function] to throw an error\n ❯ src/engine/x01.test.js:44:81\n     42| \n     43|   it('throws on invalid startingScore', () =>...",
-  "timestamp": "2026-04-07T11:17:57.162Z",
-  "retry_count": 2
-}
