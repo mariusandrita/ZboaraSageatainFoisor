@@ -196,4 +196,11 @@ Production stores the SQLite database in a Docker volume mounted at `/data`.
 
 ## License
 
-No license file is currently included in the repository.
+Copyright © 2026 Marius Andrita. All rights reserved.
+
+This source code is made publicly visible for portfolio and demonstration purposes only.
+You may not use, copy, modify, distribute, or run this software without explicit written
+permission from the author.
+
+To inquire about a licence for commercial or personal use, contact:
+[marius.andrita@gmail.com](mailto:marius.andrita@gmail.com)
