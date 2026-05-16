@@ -1,10 +1,10 @@
 # Dependencies
 node_modules
 
-# Runtime database — never commit; use data/ bind mount or volume
+# Runtime database — WAL files never committed; .db backed up on this branch
 data/*
 !data/.gitkeep
-*.db
+!data/dartsleague.db
 *.db-shm
 *.db-wal
 
