@@ -6,10 +6,13 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./data:/data
+      - dartsleague_data:/data
     environment:
       - NODE_ENV=production
       - PORT=80
       - DB_PATH=/data/dartsleague.db
       - LOG_LEVEL=info
     restart: unless-stopped
+
+volumes:
+  dartsleague_data:
