@@ -2797,8 +2797,8 @@
     height: 64px;
     background: rgba(0, 212, 170, 0.06);
     border-top: 1px solid rgba(0, 212, 170, 0.16);
-    overflow: hidden;
     flex-shrink: 0;
+    contain: layout style;
   }
 
   .ticker-label {
@@ -2834,6 +2834,8 @@
     animation: ticker-scroll 360s linear infinite;
     font-size: 0.62rem;
     color: #94a3b8;
+    will-change: transform;
+    backface-visibility: hidden;
   }
 
   .ticker-part {
