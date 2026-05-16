@@ -229,6 +229,9 @@
     return `S${dartScore(dart)}`;
   }
 
+  const viewportH = typeof window !== 'undefined' ? window.innerHeight : 1080;
+  $: dartboardSize = Math.round(viewportH * 0.215);
+
   onDestroy(() => {
     stopElapsedTimer();
   });
@@ -404,7 +407,7 @@
         </div>
 
         <div class="board-frame">
-          <Dartboard darts={boardDarts} size={230} />
+          <Dartboard darts={boardDarts} size={dartboardSize} />
         </div>
       </div>
     </section>
@@ -508,26 +511,26 @@
   }
 
   .topbar {
-    height: 84px;
-    padding: 0 28px;
+    height: 7.8vh;
+    padding: 0 1.5vw;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(6, 14, 25, 0.82);
     backdrop-filter: blur(16px);
-    gap: 18px;
+    gap: 1.7vh;
   }
 
   .brand {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 1.3vh;
   }
 
   .brand-mark {
-    width: 12px;
-    height: 42px;
+    width: 0.63vw;
+    height: 3.9vh;
     border-radius: 999px;
     background: linear-gradient(180deg, #ff6b6b, #ffd166);
     box-shadow: 0 0 20px rgba(255, 107, 107, 0.45);
@@ -545,7 +548,7 @@
   }
 
   .brand-title {
-    font-size: 1.2rem;
+    font-size: 2.2vh;
     font-weight: 800;
     color: #fff;
   }
@@ -555,7 +558,7 @@
   .score-kicker {
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    font-size: 0.72rem;
+    font-size: 1.1vh;
     font-weight: 800;
     color: #8fa7cb;
   }
@@ -572,24 +575,24 @@
   }
 
   .clock {
-    padding: 0.72rem 1rem;
+    padding: 0.9vh 1.4vh;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.04);
-    font-size: 0.82rem;
+    font-size: 1.2vh;
     font-weight: 700;
   }
 
   .clock {
-    min-width: 120px;
+    min-width: 11.1vh;
     text-align: center;
     color: #ffd166;
     font-weight: 800;
   }
 
   .match-clock {
-    min-width: 190px;
-    padding: 0.6rem 1.6rem 0.7rem;
+    min-width: 9.9vw;
+    padding: 0.9vh 2.5vh 1vh;
     border-radius: 999px;
     border: 1px solid rgba(255, 209, 102, 0.22);
     background: linear-gradient(180deg, rgba(255, 209, 102, 0.12), rgba(255, 255, 255, 0.04));
@@ -602,14 +605,14 @@
   .match-clock span {
     text-transform: uppercase;
     letter-spacing: 0.16em;
-    font-size: 0.6rem;
+    font-size: 0.9vh;
     font-weight: 800;
     color: #9db3d5;
   }
 
   .match-clock strong {
     font-family: 'Space Grotesk', system-ui, sans-serif;
-    font-size: 2rem;
+    font-size: 3.7vh;
     line-height: 1;
     color: #fff1c2;
   }
@@ -617,8 +620,8 @@
   .spotlight-next {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 0.7vh;
+    margin-top: 0.7vh;
     width: fit-content;
     max-width: 100%;
     opacity: 0.55;
@@ -627,7 +630,7 @@
   .spotlight-next span {
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    font-size: 0.58rem;
+    font-size: 0.9vh;
     font-weight: 700;
     color: #9ab2d5;
   }
@@ -635,35 +638,35 @@
   .spotlight-next-group {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: 1.2vh;
     flex-wrap: wrap;
   }
 
   .spotlight-next-main {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.6vh;
     color: #dfeaf8;
     min-width: 0;
   }
 
   .spotlight-next-main strong {
-    font-size: 0.78rem;
+    font-size: 1.15vh;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   .spotlight-next-avatar {
-    width: 22px;
-    height: 22px;
+    width: 2vh;
+    height: 2vh;
     border-radius: 999px;
     overflow: hidden;
     display: grid;
     place-items: center;
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
-    font-size: 0.6rem;
+    font-size: 0.9vh;
     font-weight: 800;
   }
 
@@ -675,22 +678,22 @@
   }
 
   .match-layout {
-    height: calc(100vh - 84px);
-    padding: 22px 28px 28px;
+    height: 92.2vh;
+    padding: 2vh 1.5vw 2.6vh;
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.78fr);
-    gap: 20px;
+    grid-template-columns: minmax(0, 1.45fr) minmax(18.75vw, 0.78fr);
+    gap: 1.85vh;
   }
 
   .spotlight {
     min-height: 0;
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
-    gap: 18px;
+    gap: 1.7vh;
   }
 
   .panel {
-    border-radius: 26px;
+    border-radius: 2.4vh;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(9, 19, 35, 0.82);
     box-shadow:
@@ -699,17 +702,17 @@
   }
 
   .spotlight-main {
-    padding: 24px;
+    padding: 2.2vh;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 1.7vh;
     min-height: 0;
   }
 
   .spotlight-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 240px;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr) 12.5vw;
+    gap: 1.7vh;
     align-items: stretch;
   }
 
@@ -717,25 +720,25 @@
     min-width: 0;
     display: flex;
     align-items: center;
-    gap: 18px;
-    padding: 20px;
-    border-radius: 24px;
+    gap: 1.7vh;
+    padding: 1.85vh;
+    border-radius: 2.2vh;
     background:
       linear-gradient(135deg, color-mix(in srgb, var(--accent) 24%, #10203a), rgba(255, 255, 255, 0.03));
   }
 
   .spotlight-avatar {
-    width: 148px;
-    height: 148px;
+    width: 13.7vh;
+    height: 13.7vh;
     flex-shrink: 0;
-    border-radius: 24px;
+    border-radius: 2.2vh;
     overflow: hidden;
-    border: 4px solid rgba(255, 255, 255, 0.16);
+    border: 0.37vh solid rgba(255, 255, 255, 0.16);
     background: color-mix(in srgb, var(--accent) 85%, #203652);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3.3rem;
+    font-size: 4.9vh;
     font-weight: 800;
     box-shadow: 0 0 32px color-mix(in srgb, var(--accent) 30%, transparent);
   }
@@ -752,31 +755,31 @@
   }
 
   .spotlight-name {
-    margin-top: 0.4rem;
-    font-size: clamp(2.8rem, 4vw, 4.6rem);
+    margin-top: 0.4vh;
+    font-size: clamp(4.1vh, 4vw, 6.8vh);
     line-height: 0.95;
     font-weight: 800;
     color: #fff;
   }
 
   .spotlight-meta {
-    margin-top: 0.8rem;
+    margin-top: 0.8vh;
     color: #d3e0f2;
-    font-size: 1rem;
+    font-size: 1.5vh;
     font-weight: 700;
   }
 
   .meta-sep {
-    margin: 0 0.45rem;
+    margin: 0 0.6vh;
     color: #89a2c7;
   }
 
   .score-tower {
-    border-radius: 24px;
+    border-radius: 2.2vh;
     min-width: 0;
     max-width: 100%;
-    min-height: 188px;
-    padding: 18px 16px;
+    min-height: 17.4vh;
+    padding: 1.7vh 0.83vw;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -793,9 +796,9 @@
   }
 
   .score-value {
-    margin-top: 0.45rem;
+    margin-top: 0.45vh;
     max-width: 100%;
-    font-size: clamp(3.4rem, 5.2vw, 5rem);
+    font-size: clamp(5vh, 5.2vw, 7.4vh);
     line-height: 1;
     font-weight: 800;
     color: var(--accent);
@@ -808,44 +811,44 @@
   }
 
   .score-note {
-    margin-top: 0.55rem;
+    margin-top: 0.55vh;
     color: #97afcf;
-    font-size: 0.84rem;
+    font-size: 1.25vh;
     font-weight: 700;
   }
   .score-mode {
-    margin-top: 0.5rem;
+    margin-top: 0.5vh;
     color: #d3e0f2;
-    font-size: 0.78rem;
+    font-size: 1.15vh;
     font-weight: 700;
     line-height: 1.35;
-    max-width: 17rem;
+    max-width: 17vw;
   }
   .score-tip {
-    margin-top: 0.35rem;
+    margin-top: 0.35vh;
     color: #ffd166;
-    font-size: 0.78rem;
+    font-size: 1.15vh;
     font-weight: 700;
     line-height: 1.35;
-    max-width: 17rem;
+    max-width: 17vw;
   }
 
   .visit-strip {
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.9fr);
-    gap: 18px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(15.6vw, 0.9fr);
+    gap: 1.7vh;
   }
 
   .visit-card {
     min-height: 0;
-    padding: 18px;
-    border-radius: 22px;
+    padding: 1.7vh;
+    border-radius: 2vh;
     background: rgba(255, 255, 255, 0.025);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 1.3vh;
     overflow: hidden;
   }
 
@@ -863,18 +866,18 @@
     display: flex;
     align-items: end;
     justify-content: space-between;
-    gap: 16px;
+    gap: 1.5vh;
   }
 
   .card-head strong {
-    font-size: 2rem;
+    font-size: 3vh;
     color: #ffd166;
   }
 
   .visit-darts {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    gap: 1.1vh;
   }
 
   .visit-darts.compact {
@@ -882,15 +885,14 @@
   }
 
   .dart-card {
-    min-height: 98px;
-    border-radius: 18px;
-    padding: 14px 12px;
+    min-height: 9.1vh;
+    border-radius: 1.7vh;
+    padding: 1.3vh 0.625vw;
     display: grid;
     grid-template-rows: auto 1fr auto;
     justify-items: center;
     align-items: center;
-    align-items: center;
-    gap: 8px;
+    gap: 0.74vh;
     text-align: center;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.045);
@@ -899,7 +901,7 @@
 
   .dart-slot-label {
     color: #89a1c4;
-    font-size: 0.68rem;
+    font-size: 1vh;
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -1004,7 +1006,7 @@
 
   .dart-name {
     font-family: 'Space Grotesk', system-ui, sans-serif;
-    font-size: 1.4rem;
+    font-size: 2.1vh;
     font-weight: 800;
     color: #fff;
     align-self: center;
@@ -1016,7 +1018,7 @@
 
   .dart-card small {
     color: #9eb2d0;
-    font-size: 0.82rem;
+    font-size: 1.2vh;
     font-weight: 700;
   }
 
@@ -1025,39 +1027,39 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 1.1vh;
   }
 
   .visit-meta {
     margin-top: auto;
     color: #c5d5ec;
-    font-size: 0.9rem;
+    font-size: 1.35vh;
     font-weight: 700;
   }
 
   .current-badge-panel {
-    margin-top: 0.9rem;
-    padding: 0.95rem 1rem;
-    border-radius: 20px;
+    margin-top: 0.9vh;
+    padding: 0.95vh 1.4vh;
+    border-radius: 1.85vh;
     border: 1px solid rgba(255, 255, 255, 0.06);
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 1.4vh;
   }
 
   .current-badge-copy {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.37vh;
     flex: 0 0 auto;
     white-space: nowrap;
   }
 
   .current-badge-label {
     color: #8fa7cb;
-    font-size: 0.72rem;
+    font-size: 1.1vh;
     font-weight: 800;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -1065,7 +1067,7 @@
 
   .current-badge-copy strong {
     color: #f1f6ff;
-    font-size: 1rem;
+    font-size: 1.5vh;
     font-weight: 800;
   }
 
@@ -1074,102 +1076,102 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 0.7rem 1rem;
+    gap: 1vh 1.4vh;
   }
 
   .current-badge-list :global(.badge-token) {
-    gap: 0.7rem;
+    gap: 1vh;
   }
 
   .current-badge-list :global(.badge-art-shell) {
-    width: 2.65rem;
-    height: 2.65rem;
+    width: 3.9vh;
+    height: 3.9vh;
   }
 
   .current-badge-list :global(.badge-label) {
-    font-size: 0.86rem;
+    font-size: 1.3vh;
   }
 
   .current-badge-list :global(.badge-count) {
-    font-size: 0.78rem;
+    font-size: 1.15vh;
   }
 
   .previous-player {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 0.93vh;
     color: #dbe6f8;
     font-weight: 700;
   }
 
   .previous-remaining {
     color: #93abcf;
-    font-size: 0.84rem;
+    font-size: 1.25vh;
     font-weight: 700;
   }
 
   .previous-remaining strong {
     color: #ffd166;
     font-family: 'Space Grotesk', system-ui, sans-serif;
-    font-size: 1rem;
+    font-size: 1.5vh;
   }
 
   .tiny-dot {
-    width: 10px;
-    height: 10px;
+    width: 0.93vh;
+    height: 0.93vh;
     border-radius: 50%;
   }
 
   .empty-state {
     margin-top: auto;
-    min-height: 98px;
+    min-height: 9.1vh;
     display: grid;
     place-items: center;
     color: #94a9c9;
     text-align: center;
-    border-radius: 18px;
+    border-radius: 1.7vh;
     background: rgba(255, 255, 255, 0.03);
   }
 
   .mini-title {
-    margin-top: 0.35rem;
-    font-size: 1.5rem;
+    margin-top: 0.35vh;
+    font-size: 2.2vh;
     color: #fff;
     font-weight: 800;
   }
 
   .board-section {
-    padding: 18px 22px;
+    padding: 1.7vh 1.15vw;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 250px;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr) 13vw;
+    gap: 1.7vh;
     align-items: center;
   }
 
   .board-sub {
-    margin-top: 0.65rem;
+    margin-top: 0.65vh;
     color: #c8d7ec;
-    font-size: 0.98rem;
+    font-size: 1.45vh;
     font-weight: 700;
   }
 
   .board-legend {
-    margin-top: 1rem;
+    margin-top: 1vh;
     display: grid;
-    gap: 10px;
+    gap: 0.93vh;
   }
 
   .legend-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 0.74vh;
     align-items: center;
   }
 
   .legend-label {
     color: #8fa7cb;
-    font-size: 0.68rem;
+    font-size: 1vh;
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -1178,13 +1180,13 @@
   .legend-chip {
     display: inline-flex;
     align-items: center;
-    min-height: 28px;
-    padding: 0.35rem 0.72rem;
+    min-height: 2.6vh;
+    padding: 0.35vh 0.9vh;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.04);
     color: #f1f6ff;
-    font-size: 0.72rem;
+    font-size: 1.1vh;
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -1236,32 +1238,32 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 250px;
-    border-radius: 24px;
+    min-height: 23vh;
+    border-radius: 2.2vh;
     background:
       radial-gradient(circle at center, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 58%, rgba(255, 255, 255, 0) 72%);
   }
 
   .scoreboard {
     min-height: 0;
-    padding: 22px;
+    padding: 2vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
   .scoreboard-title {
-    margin-top: 0.35rem;
-    font-size: 1.5rem;
+    margin-top: 0.35vh;
+    font-size: 2.2vh;
     font-weight: 800;
     color: #fff;
   }
 
   .scoreboard-list {
-    margin-top: 16px;
+    margin-top: 1.5vh;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
+    gap: 1.1vh;
     min-height: 0;
     flex: 1 1 auto;
     overflow: hidden;
@@ -1269,8 +1271,8 @@
   }
 
   .player-card {
-    border-radius: 22px;
-    padding: 18px;
+    border-radius: 2vh;
+    padding: 1.7vh;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
     height: auto;
@@ -1280,45 +1282,45 @@
     border-color: color-mix(in srgb, var(--c) 42%, rgba(255, 255, 255, 0.08));
     background: linear-gradient(135deg, color-mix(in srgb, var(--c) 16%, #0f1b2f), rgba(255, 255, 255, 0.03));
     box-shadow: 0 16px 36px color-mix(in srgb, var(--c) 18%, transparent);
-    min-height: 138px;
-    padding-bottom: 18px;
+    min-height: 12.8vh;
+    padding-bottom: 1.7vh;
   }
 
   .player-card.active .player-body {
-    gap: 10px;
+    gap: 0.93vh;
   }
 
   .player-card {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 14px;
+    gap: 1.3vh;
     align-items: start;
-    min-height: 92px;
+    min-height: 8.5vh;
   }
 
   .player-body {
     min-width: 0;
     display: grid;
     grid-template-rows: auto auto auto auto;
-    gap: 8px;
+    gap: 0.74vh;
   }
 
   .player-main {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: 4.8vh minmax(0, 1fr);
+    gap: 0.93vh;
     align-items: center;
   }
 
   .player-rank {
-    min-height: 32px;
-    padding: 0.22rem 0.6rem;
-    border-radius: 12px;
+    min-height: 2.96vh;
+    padding: 0.22vh 0.9vh;
+    border-radius: 1.1vh;
     display: inline-grid;
     place-items: center;
     background: rgba(255, 255, 255, 0.05);
     color: #a8bddb;
-    font-size: 0.74rem;
+    font-size: 1.1vh;
     font-weight: 800;
     letter-spacing: 0.08em;
     justify-self: end;
@@ -1330,15 +1332,15 @@
   }
 
   .player-avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 13px;
+    width: 4.8vh;
+    height: 4.8vh;
+    border-radius: 1.2vh;
     overflow: hidden;
     background: color-mix(in srgb, var(--c) 78%, #1b2d48);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 2.2vh;
     font-weight: 800;
   }
 
@@ -1347,11 +1349,11 @@
     display: grid;
     grid-template-rows: auto auto;
     align-content: start;
-    row-gap: 6px;
+    row-gap: 0.56vh;
   }
 
   .player-name {
-    font-size: 1.08rem;
+    font-size: 1.6vh;
     font-weight: 700;
     color: #fff;
     white-space: nowrap;
@@ -1361,22 +1363,22 @@
 
   .player-sub {
     color: #97accb;
-    font-size: 0.74rem;
+    font-size: 1.1vh;
     font-weight: 700;
   }
 
   .player-avgs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 1.3vh;
     align-items: end;
-    min-height: 34px;
+    min-height: 3.15vh;
   }
 
   .player-avg-item small {
     display: block;
     color: #89a1c4;
-    font-size: 0.62rem;
+    font-size: 0.93vh;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-weight: 800;
@@ -1385,14 +1387,14 @@
   .player-avg-item strong,
   .player-avg-item span {
     display: block;
-    margin-top: 0.12rem;
+    margin-top: 0.12vh;
     font-family: 'Space Grotesk', system-ui, sans-serif;
     line-height: 1;
   }
 
   .player-avg-item strong {
     color: #eef4ff;
-    font-size: 1rem;
+    font-size: 1.5vh;
   }
 
   .player-avg-item.up strong {
@@ -1408,23 +1410,23 @@
   .player-avg-item span,
   .player-avg-item strong {
     color: #a6b8d3;
-    font-size: 0.9rem;
+    font-size: 1.35vh;
     font-weight: 700;
   }
 
   .player-metrics {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 1.1vh;
     align-items: end;
-    min-height: 28px;
+    min-height: 2.6vh;
   }
 
   .player-visit-row {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    min-height: 30px;
+    gap: 0.74vh;
+    min-height: 2.78vh;
     align-items: stretch;
   }
 
@@ -1434,14 +1436,14 @@
 
   .player-visit-dart {
     min-width: 0;
-    min-height: 30px;
-    border-radius: 10px;
+    min-height: 2.78vh;
+    border-radius: 0.93vh;
     display: grid;
     place-items: center;
-    padding: 0 8px;
+    padding: 0 0.42vw;
     border: 1px solid rgba(255, 255, 255, 0.06);
     background: rgba(255, 255, 255, 0.03);
-    font-size: 0.7rem;
+    font-size: 1.04vh;
     font-weight: 800;
     color: #dfeaf8;
     text-transform: uppercase;
@@ -1473,14 +1475,14 @@
   .player-visit-empty {
     align-self: center;
     color: #7085a7;
-    font-size: 0.78rem;
+    font-size: 1.15vh;
     font-weight: 800;
     letter-spacing: 0.08em;
   }
 
   .player-score {
-    min-width: 88px;
-    font-size: 2.2rem;
+    min-width: 8.1vh;
+    font-size: 4.1vh;
     font-weight: 800;
     color: #fff;
   }
@@ -1491,20 +1493,20 @@
     align-items: flex-end;
     text-align: right;
     justify-content: center;
-    min-width: 112px;
-    gap: 4px;
+    min-width: 10.4vh;
+    gap: 0.37vh;
   }
 
   .player-score-label {
     color: #8fa7cb;
-    font-size: 0.72rem;
+    font-size: 1.1vh;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
   .player-footer {
-    min-height: 14px;
+    min-height: 1.3vh;
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -1515,191 +1517,191 @@
     align-items: center;
     justify-content: flex-end;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 0.37vh;
     min-width: 0;
     padding: 0;
     color: #a4b7d4;
-    font-size: 0.68rem;
+    font-size: 1vh;
     font-weight: 800;
     line-height: 1.2;
     text-align: right;
   }
 
   .scoreboard.compact {
-    padding: 18px;
+    padding: 1.7vh;
   }
 
   .scoreboard.compact .scoreboard-list {
-    margin-top: 12px;
-    gap: 12px;
+    margin-top: 1.1vh;
+    gap: 1.1vh;
   }
 
   .player-card.compact {
-    padding: 14px;
-    border-radius: 18px;
+    padding: 1.3vh;
+    border-radius: 1.7vh;
   }
 
   .player-card.compact .player-main {
-    grid-template-columns: 52px minmax(0, 1fr);
-    gap: 9px;
+    grid-template-columns: 4.8vh minmax(0, 1fr);
+    gap: 0.83vh;
   }
 
   .player-card:not(.active) {
-    min-height: 78px;
-    padding: 10px 16px;
+    min-height: 7.2vh;
+    padding: 0.93vh 0.83vw;
   }
 
   .player-card:not(.active) .player-score-block {
-    gap: 0px;
+    gap: 0;
   }
 
   .player-card:not(.active) .player-body {
-    gap: 4px;
+    gap: 0.37vh;
   }
 
   .player-card:not(.active) .player-main {
-    grid-template-columns: 44px minmax(0, 1fr);
-    gap: 8px;
+    grid-template-columns: 4.07vh minmax(0, 1fr);
+    gap: 0.74vh;
   }
 
   .player-card:not(.active) .player-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 11px;
-    font-size: 1rem;
+    width: 4.07vh;
+    height: 4.07vh;
+    border-radius: 1vh;
+    font-size: 1.85vh;
   }
 
   .player-card:not(.active) .player-name {
-    font-size: 0.94rem;
+    font-size: 1.4vh;
   }
 
   .player-card:not(.active) .player-metrics {
-    min-height: 24px;
-    gap: 10px;
+    min-height: 2.22vh;
+    gap: 0.93vh;
   }
 
   .player-card:not(.active) .player-avg-item small {
-    font-size: 0.56rem;
+    font-size: 0.83vh;
   }
 
   .player-card:not(.active) .player-avg-item strong {
-    font-size: 0.9rem;
+    font-size: 1.35vh;
   }
 
   .player-card:not(.active) .player-visit-row {
-    min-height: 22px;
-    gap: 5px;
+    min-height: 2.04vh;
+    gap: 0.46vh;
   }
 
   .player-card:not(.active) .player-visit-dart {
-    min-height: 22px;
-    border-radius: 8px;
-    font-size: 0.6rem;
-    padding: 0 4px;
+    min-height: 2.04vh;
+    border-radius: 0.74vh;
+    font-size: 0.9vh;
+    padding: 0 0.21vw;
   }
 
   .player-card:not(.active) .player-footer {
-    min-height: 10px;
+    min-height: 0.93vh;
   }
 
   .player-card:not(.active) .player-meta-chip {
-    font-size: 0.6rem;
+    font-size: 0.9vh;
   }
 
   .player-card:not(.active) .player-score {
-    font-size: 1.8rem;
-    min-width: 72px;
+    font-size: 3.33vh;
+    min-width: 6.67vh;
     line-height: 1;
   }
 
   .player-card:not(.active) .player-rank {
-    min-height: 26px;
-    padding: 0.14rem 0.44rem;
-    border-radius: 10px;
-    font-size: 0.64rem;
+    min-height: 2.41vh;
+    padding: 0.14vh 0.65vh;
+    border-radius: 0.93vh;
+    font-size: 0.95vh;
   }
 
   .player-card.compact .player-rank {
-    min-height: 26px;
-    padding: 0.14rem 0.42rem;
-    border-radius: 10px;
-    font-size: 0.64rem;
+    min-height: 2.41vh;
+    padding: 0.14vh 0.62vh;
+    border-radius: 0.93vh;
+    font-size: 0.95vh;
   }
 
   .player-card.compact .player-avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    font-size: 1.15rem;
+    width: 4.8vh;
+    height: 4.8vh;
+    border-radius: 1.1vh;
+    font-size: 2.1vh;
   }
 
   .player-card.compact .player-name {
-    font-size: 0.95rem;
+    font-size: 1.4vh;
   }
 
   .player-card.compact .player-sub {
-    font-size: 0.68rem;
+    font-size: 1vh;
   }
 
   .player-card.compact .player-avgs {
-    gap: 6px;
-    min-height: 26px;
+    gap: 0.56vh;
+    min-height: 2.41vh;
   }
 
   .player-card.compact .player-avg-item small {
-    font-size: 0.5rem;
+    font-size: 0.74vh;
   }
 
   .player-card.compact .player-avg-item strong {
-    font-size: 0.8rem;
+    font-size: 1.2vh;
   }
 
   .player-card.compact .player-avg-item span {
-    font-size: 0.72rem;
+    font-size: 1.07vh;
   }
 
   .player-card.compact .player-metrics {
-    gap: 8px;
-    min-height: 26px;
+    gap: 0.74vh;
+    min-height: 2.41vh;
   }
 
   .player-card.compact .player-visit-row {
-    gap: 5px;
-    min-height: 28px;
+    gap: 0.46vh;
+    min-height: 2.59vh;
   }
 
   .player-card.compact .player-visit-dart {
-    min-height: 28px;
-    border-radius: 8px;
-    font-size: 0.62rem;
-    padding: 0 4px;
+    min-height: 2.59vh;
+    border-radius: 0.74vh;
+    font-size: 0.92vh;
+    padding: 0 0.21vw;
   }
 
   .player-card.compact .player-visit-empty {
-    font-size: 0.68rem;
+    font-size: 1vh;
   }
 
   .player-card.compact .player-footer {
-    min-height: 14px;
+    min-height: 1.3vh;
   }
 
   .player-card.compact .player-score {
-    min-width: 62px;
-    font-size: 1.6rem;
+    min-width: 5.74vh;
+    font-size: 2.96vh;
     line-height: 1;
   }
 
   .player-card.compact .player-score-label {
-    font-size: 0.62rem;
+    font-size: 0.92vh;
   }
 
   .player-card.compact .player-meta-chip {
-    font-size: 0.64rem;
+    font-size: 0.95vh;
   }
 
   .scoreboard.grid .scoreboard-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 0.93vh;
   }
 
 </style>
