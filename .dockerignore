@@ -4,7 +4,9 @@
 **/node_modules
 
 # Previous build output (let Docker build from source every time)
-server/public
+server/public/controller
+server/public/tv
+server/public/manage
 web/controller/dist
 web/tv/dist
 

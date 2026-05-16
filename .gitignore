@@ -1,24 +1,33 @@
-node_modules/
+# Dependencies
+node_modules
 
-# SQLite databases and backups
+# Runtime database — never commit; use data/ bind mount or volume
+data/*
+!data/.gitkeep
 *.db
 *.db-shm
 *.db-wal
-backups/
 
-# environment
+# Built frontends
+server/public/controller
+server/public/tv
+server/public/manage
+web/*/dist
+
+# Environment secrets
 .env
-.env.*
-!.env.example
 
-# AI session state
+# AI / tooling state (not project artifacts)
 .omc/
 .claude/
+.tmp/
 
-# OS
+# Backups and personal import data
+backups/
+ProDarts/
+
+# Session / scratch notes
+SESSION.md
+
+# macOS
 .DS_Store
-Thumbs.db
-
-# logs
-*.log
-npm-debug.log*
