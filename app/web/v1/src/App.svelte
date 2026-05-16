@@ -1879,9 +1879,11 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    overflow: hidden;
+    gap: clamp(0.25rem, 0.7vh, 0.6rem);
+    overflow-y: auto;
+    scrollbar-width: none;
   }
+  .spotlight::-webkit-scrollbar { display: none; }
 
   .sp-hero {
     display: flex;
@@ -1972,8 +1974,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.9rem;
-    padding: 1.2rem 1rem 1rem;
+    gap: clamp(0.4rem, 0.9vh, 0.9rem);
+    padding: clamp(0.5rem, 1.4vh, 1.2rem) 1rem;
     border-left: none;
     border-top: 4px solid var(--pc, #00d4aa);
     border-radius: 18px;
@@ -1988,8 +1990,8 @@
   }
   .sp-avatar,
   .sp-avatar-fb {
-    width: 168px;
-    height: 168px;
+    width: clamp(80px, 13vh, 150px);
+    height: clamp(80px, 13vh, 150px);
     border-radius: 50%;
   }
   .sp-avatar {
@@ -2002,14 +2004,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3.4rem;
+    font-size: clamp(1.8rem, 3vh, 3.4rem);
     font-weight: 900;
     color: #fff;
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
   }
   .sp-ring {
-    inset: -6px;
-    border-width: 4px;
+    inset: -5px;
+    border-width: 3px;
   }
   .sp-identity {
     width: 100%;
@@ -2019,64 +2021,64 @@
     align-items: center;
   }
   .sp-name {
-    font-size: 1.8rem;
+    font-size: clamp(1.1rem, 2.5vh, 1.8rem);
     line-height: 1.05;
     text-align: center;
   }
   .sp-nickname {
-    font-size: 0.92rem;
-    margin-top: 0.18rem;
+    font-size: clamp(0.7rem, 1.2vh, 0.92rem);
+    margin-top: 0.15rem;
   }
   .sp-period {
-    font-size: 0.58rem;
-    margin-top: 0.38rem;
+    font-size: 0.55rem;
+    margin-top: 0.25rem;
   }
   .sp-hero-badges {
-    margin-top: 1.05rem;
+    margin-top: clamp(0.4rem, 0.8vh, 1.05rem);
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.62rem;
+    gap: 0.45rem;
   }
   .sp-hero-badges :global(.badge-token) {
     min-height: 0;
     padding: 0;
-    gap: 0.55rem;
+    gap: 0.4rem;
     background: transparent;
     border: none;
   }
   .sp-hero-badges :global(.badge-art-shell) {
-    width: 3.2rem;
-    height: 3.2rem;
+    width: clamp(1.6rem, 2.8vh, 2.6rem);
+    height: clamp(1.6rem, 2.8vh, 2.6rem);
   }
   .sp-hero-badges :global(.badge-label),
   .sp-hero-badges :global(.badge-count) {
-    font-size: 0.9rem;
+    font-size: clamp(0.6rem, 1vh, 0.82rem);
   }
   .sp-headline-stats {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 0.58rem;
+    gap: clamp(0.3rem, 0.7vh, 0.58rem);
     flex-shrink: 0;
   }
   .sp-highlight-card {
     display: grid;
-    gap: 0.34rem;
-    padding: 0.8rem 0.85rem;
-    border-radius: 16px;
+    gap: 0.25rem;
+    padding: clamp(0.4rem, 1vh, 0.8rem) 0.6rem;
+    border-radius: 12px;
     background: rgba(255,255,255,0.035);
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
   }
   .sp-highlight-label {
-    font-size: 0.58rem;
+    font-size: clamp(0.46rem, 0.7vh, 0.58rem);
     font-weight: 800;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: #7c8aa5;
   }
   .sp-highlight-card strong {
-    font-size: 1.45rem;
+    font-size: clamp(0.95rem, 1.8vh, 1.45rem);
     line-height: 1;
     font-weight: 900;
     color: #f8fbff;
@@ -2115,9 +2117,9 @@
   }
   .sp-type-bars {
     display: grid;
-    gap: 0.45rem;
-    padding: 0.9rem 1rem;
-    border-radius: 16px;
+    gap: clamp(0.25rem, 0.6vh, 0.45rem);
+    padding: clamp(0.45rem, 1.1vh, 0.9rem) 1rem;
+    border-radius: 12px;
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
@@ -2129,16 +2131,16 @@
     gap: 0.55rem;
   }
   .sp-type-label {
-    font-size: 0.62rem;
+    font-size: 0.54rem;
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
   }
   .sp-type-label.single { color: #38bdf8; }
   .sp-type-label.double { color: #34d399; }
   .sp-type-label.triple { color: #fbbf24; }
   .sp-type-track {
-    height: 10px;
+    height: 7px;
     border-radius: 999px;
     background: rgba(255,255,255,0.07);
     overflow: hidden;
@@ -2195,7 +2197,7 @@
     background: rgba(255,255,255,0.035);
   }
   .sp-recent-card-featured {
-    padding: 0.82rem 0.9rem;
+    padding: clamp(0.45rem, 1vh, 0.82rem) 0.9rem;
   }
   .sp-recent-win {
     border-color: rgba(34, 197, 94, 0.24);
@@ -2294,13 +2296,15 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
-    overflow: hidden;
+    gap: 0.4rem;
+    overflow-y: auto;
+    scrollbar-width: none;
     padding-right: 2px;
     position: absolute;
     inset: 0;
     padding-bottom: 1.2rem;
   }
+  .rec-scene::-webkit-scrollbar { display: none; }
 
   .rec-scene-title {
     font-size: 0.75rem;
@@ -2322,14 +2326,14 @@
   }
   .rec-match-list {
     display: grid;
-    gap: 0.38rem;
+    gap: 0.2rem;
   }
   .rec-match-row {
     display: flex;
     align-items: stretch;
     justify-content: space-between;
-    gap: 0.6rem;
-    padding: 0.58rem 0.68rem;
+    gap: 0.4rem;
+    padding: 0.32rem 0.55rem;
     background:
       linear-gradient(135deg, color-mix(in srgb, var(--winner-color, #475569) 14%, rgba(255,255,255,0.03)), rgba(255,255,255,0.02)),
       radial-gradient(circle at top left, color-mix(in srgb, var(--winner-color, #475569) 20%, transparent) 0%, transparent 56%);
@@ -2357,7 +2361,7 @@
     color: color-mix(in srgb, var(--winner-color, #475569) 82%, white);
   }
   .rec-match-winner-name {
-    font-size: 0.9rem;
+    font-size: 0.78rem;
     font-weight: 900;
     color: #f8fbff;
     white-space: nowrap;
@@ -2391,7 +2395,7 @@
   }
   .rec-match-score {
     flex-shrink: 0;
-    font-size: 0.82rem;
+    font-size: 0.7rem;
     font-weight: 900;
     color: #e2e8f0;
     font-variant-numeric: tabular-nums;
@@ -2473,15 +2477,15 @@
   .rec-card {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.55rem 0.65rem;
+    gap: 0.45rem;
+    padding: 0.38rem 0.55rem;
     background: rgba(255,255,255,0.025);
     border: 1px solid rgba(255,255,255,0.065);
     border-radius: 7px;
     flex-shrink: 0;
   }
   .rec-card.hero {
-    padding: 0.95rem 0.95rem;
+    padding: 0.65rem 0.75rem;
     background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(255,255,255,0.03));
     border-color: rgba(0,212,170,0.18);
   }
@@ -2495,7 +2499,7 @@
     margin-bottom: 0.05rem;
   }
   .rec-value {
-    font-size: 1.05rem;
+    font-size: 0.88rem;
     font-weight: 900;
     color: #f59e0b;
     font-variant-numeric: tabular-nums;
