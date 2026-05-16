@@ -194,6 +194,30 @@ Production stores the SQLite database in a Docker volume mounted at `/data`.
 - verify `/`, `/tv`, and `/manage`
 - verify badge assets under `server/public/assets/badges`
 
+## Owner Workflow
+
+**Back up the database after playing:**
+
+```bash
+git checkout ZboaraSageatainFoisor
+bash deploy/scripts/backup-db.sh     # checkpoints WAL, commits DB, pushes to private
+```
+
+**Push code improvements to the public repo:**
+
+```bash
+git checkout main
+git push origin main
+```
+
+**Keep the personal branch up to date with code changes:**
+
+```bash
+git checkout ZboaraSageatainFoisor
+git rebase main
+git push private ZboaraSageatainFoisor --force-with-lease
+```
+
 ## License
 
 Copyright © 2026 Marius Andrita. All rights reserved.
