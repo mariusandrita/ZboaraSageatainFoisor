@@ -22,9 +22,8 @@ web/*/dist
 .claude/
 .tmp/
 
-# Backups and personal import data
+# Backups
 backups/
-ProDarts/
 
 # Session / scratch notes
 SESSION.md
